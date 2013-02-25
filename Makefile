@@ -7,7 +7,7 @@ GLFramework = NOTYETSET
 Include = -I/usr/include/GL -I/usr/include
 Link = -L/usr/local/lib -lm
 Flags = -g -o
-Sources = src/*.cpp
+Sources = src/*.cpp src/lego/*.cpp
 
 CC = g++
 ExeName = pa1

@@ -1,6 +1,3 @@
-/* Simple opengl demo program. 
-*/
-
 //#elif defined(__linux)
 #if defined(__APPLE__) || defined(MACOSX)
 #   include <GLUT/glut.h>
@@ -12,25 +9,11 @@
 #include <stdio.h>
 #include "GLScreenCapturer.h"
 #include "trackball.h"
-
-#define NELEMS(x)  (sizeof(x) / sizeof(x[0]))
+#include "lego/lego.h"
 
 using namespace std;
 
 #define BUFFER_LENGTH 64
-#define LEGO_HEIGHT 10
-#define LEGO_WIDTH 10
-#define WALL_WIDTH 2
-#define LEGO_LENGTH 30
-#define QUAD_CYCLE(verts) \
-{ \
-    int i; \
-    glBegin(GL_QUAD_STRIP); { \
-        for (i = 0; i < 8; i++) glVertex3fv(&verts[i][0]); \
-        glVertex3fv(&verts[0][0]); \
-        glVertex3fv(&verts[1][0]); \
-    } glEnd(); \
-}
 
 GLfloat camRotX, camRotY, camPosX, camPosY, camPosZ;
 GLint viewport[4];
@@ -38,7 +21,7 @@ GLdouble modelview[16];
 GLdouble projection[16];
 
 GLuint pickedObj = -1;
-GLuint theLego;
+GLuint legoDL;
 
 char titleString[150];
 
@@ -47,10 +30,13 @@ bool isTeapot2_selected = false;
 
 // Lights & Materials
 GLfloat ambient[] = {0.2, 0.2, 0.2, 1.0};
-GLfloat position[] = {0.0, 0.0, 2.0, 1.0};
+GLfloat position[] = {20, 20, 20, 10};
+GLfloat position2[] = {-20, -20, -20, -10};
 GLfloat mat_diffuse[] = {0.6, 0.6, 0.6, 1.0};
 GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
-GLfloat mat_shininess[] = {50.0};
+GLfloat mat_shininess[] = {20.0};
+GLfloat global_ambient[] = { 0.4, 0.4, 0.4, 1 };
+
 
 static GLScreenCapturer screenshot("screenshot-%d.ppm");
 
@@ -58,279 +44,25 @@ void initLights(void)
 {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
     glLightfv(GL_LIGHT0, GL_POSITION, position);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, mat_diffuse);
+    //glLightfv(GL_LIGHT0, GL_SPECULAR, mat_specular);
+
+    glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+    glLightfv(GL_LIGHT1, GL_POSITION, position2);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, mat_diffuse);
+    //glLightfv(GL_LIGHT1, GL_SPECULAR, mat_specular);
 
     glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 }
 
-//LEGO VERTICES
-
-//main eight
-static GLfloat vertex_a[3] = {
-    -LEGO_LENGTH/2,
-    -LEGO_WIDTH/2,
-    0};
-static GLfloat vertex_b[3] = {
-    -LEGO_LENGTH/2,
-    -LEGO_WIDTH/2,
-    LEGO_HEIGHT
-};
-static GLfloat vertex_c[3] = {
-    LEGO_LENGTH/2,
-    -LEGO_WIDTH/2,
-    0
-};
-static GLfloat vertex_d[3] = {
-    LEGO_LENGTH/2,
-    -LEGO_WIDTH/2,
-    LEGO_HEIGHT
-};
-static GLfloat vertex_e[3] = {
-    LEGO_LENGTH/2,
-    LEGO_WIDTH/2,
-    0
-};
-static GLfloat vertex_f[3] = {
-    LEGO_LENGTH/2,
-    LEGO_WIDTH/2,
-    LEGO_HEIGHT
-};
-static GLfloat vertex_g[3] = {
-    -LEGO_LENGTH/2,
-    LEGO_WIDTH/2,
-    0
-};
-static GLfloat vertex_h[3] = {
-    -LEGO_LENGTH/2,
-    LEGO_WIDTH/2,
-    LEGO_HEIGHT
-};
-static GLfloat inner_vertex_a[3] = {
-    -(LEGO_LENGTH/2 - WALL_WIDTH),
-    -(LEGO_WIDTH/2 - WALL_WIDTH),
-    0
-};
-static GLfloat inner_vertex_ag[3] = {
-    -LEGO_LENGTH/2,
-    -(LEGO_WIDTH/2 - WALL_WIDTH),
-    0
-};
-static GLfloat inner_vertex_ac[3] = {
-    -(LEGO_LENGTH/2 - WALL_WIDTH),
-    -LEGO_WIDTH/2,
-    0
-};
-static GLfloat inner_vertex_c[3] =  {
-    LEGO_LENGTH/2 - WALL_WIDTH,
-    -(LEGO_WIDTH/2 - WALL_WIDTH),
-    0
-};
-static GLfloat inner_vertex_ca[3] = {
-    LEGO_LENGTH/2 - WALL_WIDTH,
-    -LEGO_WIDTH/2,
-    0
-};
-static GLfloat inner_vertex_ce[3] = {
-    LEGO_LENGTH/2,
-    -(LEGO_WIDTH/2 - WALL_WIDTH),
-    0
-};
-static GLfloat inner_vertex_e[3] = {
-    LEGO_LENGTH/2 - WALL_WIDTH,
-    LEGO_WIDTH/2 - WALL_WIDTH,
-    0
-};
-static GLfloat inner_vertex_ec[3] = {
-    LEGO_LENGTH/2,
-    (LEGO_WIDTH/2 - WALL_WIDTH),
-    0
-};
-static GLfloat inner_vertex_eg[3] = {
-    LEGO_LENGTH/2 - WALL_WIDTH,
-    LEGO_WIDTH/2,
-    0
-};
-static GLfloat inner_vertex_g[3] =  {
-    -(LEGO_LENGTH/2 - WALL_WIDTH),
-    LEGO_WIDTH/2 - WALL_WIDTH,
-    0
-};
-static GLfloat inner_vertex_ge[3] = {
-    -(LEGO_LENGTH/2 - WALL_WIDTH),
-    LEGO_WIDTH/2,
-    0
-};
-static GLfloat inner_vertex_ga[3] = {
-    -LEGO_LENGTH/2,
-    LEGO_WIDTH/2 - WALL_WIDTH,
-    0
-};
-static GLfloat inner_vertex_b[3] =  {
-    -(LEGO_LENGTH/2 - WALL_WIDTH),
-    -(LEGO_WIDTH/2 - WALL_WIDTH),
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_bd[3] = {
-   -(LEGO_LENGTH/2 - WALL_WIDTH),
-   -LEGO_WIDTH/2,
-   LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_bh[3] = {
-    -LEGO_LENGTH/2,
-    -(LEGO_WIDTH/2 - WALL_WIDTH),
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_h[3] =  {
-    -(LEGO_LENGTH/2 - WALL_WIDTH),
-    LEGO_WIDTH/2 - WALL_WIDTH,
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_hd[3] = {
-    -(LEGO_LENGTH/2 - WALL_WIDTH),
-    -LEGO_WIDTH/2,
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_hh[3] = {
-    -LEGO_LENGTH/2,
-    -(LEGO_WIDTH/2 - WALL_WIDTH),
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_d[3] =  {
-    LEGO_LENGTH/2 - WALL_WIDTH,
-    -(LEGO_WIDTH/2 - WALL_WIDTH),
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_db[3] = {
-    LEGO_LENGTH/2 - WALL_WIDTH,
-    -LEGO_WIDTH/2,
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_df[3] = {
-    LEGO_LENGTH/2,
-    -(LEGO_WIDTH/2 - WALL_WIDTH),
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_f[3] =  {
-    LEGO_LENGTH/2 - WALL_WIDTH,
-    LEGO_WIDTH/2 - WALL_WIDTH,
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_fh[3] = {
-    LEGO_LENGTH/2 - WALL_WIDTH,
-    LEGO_WIDTH/2,
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat inner_vertex_fd[3] = {
-    LEGO_LENGTH/2,
-    LEGO_WIDTH/2 - WALL_WIDTH,
-    LEGO_HEIGHT - WALL_WIDTH
-};
-static GLfloat *lego_side_vertices[8] = {
-    &vertex_a[0], &vertex_b[0],
-    &vertex_c[0], &vertex_d[0],
-    &vertex_e[0], &vertex_f[0],
-    &vertex_g[0], &vertex_h[0]
-};
-static GLfloat *lego_base_corner_vertices[4][4] = {
-    {   &inner_vertex_a[0],
-        &inner_vertex_ac[0],
-        &vertex_a[0],
-        &inner_vertex_ag[0]
-    },{ &inner_vertex_c[0],
-        &inner_vertex_ce[0],
-        &vertex_c[0],
-        &inner_vertex_ca[0]
-    },{ &inner_vertex_e[0],
-        &inner_vertex_eg[0],
-        &vertex_e[0],
-        &inner_vertex_ec[0]
-    },{ &inner_vertex_g[0],
-        &inner_vertex_ga[0],
-        &vertex_g[0],
-        &inner_vertex_ge[0]
-    }
-};
-
-static GLfloat *lego_base_edge_vertices[4][4] = {
-    {   &inner_vertex_a[0],
-        &inner_vertex_ac[0],
-        &inner_vertex_ca[0],
-        &inner_vertex_c[0]
-    },{ &inner_vertex_c[0],
-        &inner_vertex_ce[0],
-        &inner_vertex_ec[0],
-        &inner_vertex_e[0]
-    },{ &inner_vertex_e[0],
-        &inner_vertex_eg[0],
-        &inner_vertex_ge[0],
-        &inner_vertex_g[0]
-    },{ &inner_vertex_g[0],
-        &inner_vertex_ga[0],
-        &inner_vertex_ag[0],
-        &inner_vertex_a[0]
-    }
-};
-
-static GLfloat *lego_inner_face_vertices[8] = {
-    &inner_vertex_a[0],
-    &inner_vertex_b[0],
-    &inner_vertex_c[0],
-    &inner_vertex_d[0],
-    &inner_vertex_e[0],
-    &inner_vertex_f[0],
-    &inner_vertex_g[0],
-    &inner_vertex_h[0]
-};
-
-static void lego_sides(){
-    QUAD_CYCLE(lego_side_vertices);
-}
-
-static void lego_inner_faces(){
-    QUAD_CYCLE(lego_inner_face_vertices);
-}
-
-static void lego_base_edges(){
-    int i, j;
-    glBegin(GL_QUADS);{
-        for (i = 0; i < 4; i++){
-            for (j = 0; j < 4; j++){
-                glVertex3fv(&lego_base_edge_vertices[i][j][0]);
-            }
-        }
-    } glEnd();
-}
-
-
-static void lego_base_corners()
-{
-    int i, j;
-    for (i = 0; i < 4; i++) {
-        glBegin(GL_TRIANGLE_FAN); {
-            for (j = 0; j < 4; j++) {
-                glVertex3fv(&lego_base_corner_vertices[i][j][0]);
-            }
-        } glEnd();
-    }
-}
-
-static void lego_base()
-{
-    lego_base_corners();
-    lego_base_edges();
-}
-
-
-static void lego()
-{
-    lego_sides();
-    lego_base();
-    lego_inner_faces();
-}
 
 void init()
 {
@@ -349,9 +81,13 @@ void init()
     glClearColor(0.0, 0.0, 0.0, 1.0);
     initLights();
 
-    theLego = glGenLists (1);
-    glNewList(theLego, GL_COMPILE);
-    lego();
+    legoDL = glGenLists (1);
+    glNewList(legoDL, GL_COMPILE);
+    {
+        GLfloat color[] = {0, 1, 0, 1};
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+        lego();
+    }
     glEndList();
 
     glShadeModel(GL_FLAT);
@@ -410,7 +146,7 @@ void display( void )
         setCamera();
         tbMatrix();
 
-        glCallList(theLego);
+        glCallList(legoDL);
 
         // Retrieve current matrice before they popped.
         glGetDoublev( GL_MODELVIEW_MATRIX, modelview );        // Retrieve The Modelview Matrix
@@ -474,7 +210,7 @@ void keyboard( unsigned char key, int x, int y )
         case 'i':
         case 'I':
             glLoadIdentity();
-            gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0);
+            gluLookAt(0, 0, 3, 0, 0, 0, 0, 1, 0);
             break;
         case 'r':
             printf("save current screen\n");
@@ -524,7 +260,7 @@ void processSelection(int xPos, int yPos)
         {
             setCamera();
             tbMatrixForSelection();
-            glCallList(theLego); 
+            glCallList(legoDL); 
 
         }
         glPopMatrix();
