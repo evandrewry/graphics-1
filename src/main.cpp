@@ -13,9 +13,15 @@
 #include "GLScreenCapturer.h"
 #include "trackball.h"
 
+#define NELEMS(x)  (sizeof(x) / sizeof(x[0]))
+
 using namespace std;
 
 #define BUFFER_LENGTH 64
+#define LEGO_HEIGHT 10
+#define LEGO_WIDTH 10
+#define WALL_WIDTH 2
+#define LEGO_LENGTH 30
 
 GLfloat camRotX, camRotY, camPosX, camPosY, camPosZ;
 GLint viewport[4];
@@ -43,52 +49,154 @@ void initLights(void)
 {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    
+
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
     glLightfv(GL_LIGHT0, GL_POSITION, position);
-    
+
     glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 }
 
+//LEGO VERTICES
 
-static GLfloat legoverts[8][3] = {
-    {-1.5, 1, 0}, {1.5, 1, 0},
-    {-1.5, -1, 0}, {1.5, -1, 0},
-    {-1.5, 1, 1}, {1.5, 1, 1},
-    {-1.5, -1, 1}, {1.5, -1, 1}
+//main eight
+static GLfloat vertex_a[3] = {-LEGO_LENGTH/2, -LEGO_WIDTH/2, 0};
+static GLfloat vertex_b[3] = {-LEGO_LENGTH/2, -LEGO_WIDTH/2, LEGO_HEIGHT};
+static GLfloat vertex_c[3] = {LEGO_LENGTH/2, -LEGO_WIDTH/2, 0};
+static GLfloat vertex_d[3] = {LEGO_LENGTH/2, -LEGO_WIDTH/2, LEGO_HEIGHT};
+static GLfloat vertex_e[3] = {LEGO_LENGTH/2, LEGO_WIDTH/2, 0};
+static GLfloat vertex_f[3] = {LEGO_LENGTH/2, LEGO_WIDTH/2, LEGO_HEIGHT};
+static GLfloat vertex_g[3] = {-LEGO_LENGTH/2, LEGO_WIDTH/2, 0};
+static GLfloat vertex_h[3] = {-LEGO_LENGTH/2, LEGO_WIDTH/2, LEGO_HEIGHT};
+
+static GLfloat *lego_side_vertices[8] = {
+    &vertex_a[0], &vertex_b[0],
+    &vertex_c[0], &vertex_d[0],
+    &vertex_e[0], &vertex_f[0],
+    &vertex_g[0], &vertex_h[0]
 };
 
-static GLuint legorects[6][4] = {
-    {0, 1, 3, 2}, {0, 4, 5, 1},
-    {0, 2, 6, 4}, {2, 3, 7, 6},
-    {1, 5, 7, 3}, {6, 7, 5, 4}
+static GLfloat inner_vertex_a[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -(LEGO_WIDTH/2 - WALL_WIDTH), 0};
+static GLfloat inner_vertex_ag[3] = {-LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), 0};
+static GLfloat inner_vertex_ac[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, 0};
+static GLfloat inner_vertex_c[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), -(LEGO_WIDTH/2 - WALL_WIDTH), 0};
+static GLfloat inner_vertex_ca[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, 0};
+static GLfloat inner_vertex_ce[3] = {LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), 0};
+static GLfloat inner_vertex_e[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), (LEGO_WIDTH/2 - WALL_WIDTH), 0};
+static GLfloat inner_vertex_ec[3] = {LEGO_LENGTH/2, (LEGO_WIDTH/2 - WALL_WIDTH), 0};
+static GLfloat inner_vertex_eg[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), LEGO_WIDTH/2, 0};
+static GLfloat inner_vertex_g[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), (LEGO_WIDTH/2 - WALL_WIDTH), 0};
+static GLfloat inner_vertex_ge[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), LEGO_WIDTH/2, 0};
+static GLfloat inner_vertex_ga[3] = {-LEGO_LENGTH/2, (LEGO_WIDTH/2 - WALL_WIDTH), 0};
+static GLfloat inner_vertex_b[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_bd[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_bh[3] = {-LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_h[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), (LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_hd[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_hh[3] = {-LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_d[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_db[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_df[3] = {LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_f[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), (LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_fh[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), LEGO_WIDTH/2, LEGO_HEIGHT - WALL_WIDTH};
+static GLfloat inner_vertex_fd[3] = {LEGO_LENGTH/2, (LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
+
+static GLfloat *lego_base_corner_vertices[4][4] = {
+    { &inner_vertex_a[0], &inner_vertex_ac[0], &vertex_a[0], &inner_vertex_ag[0] },
+    { &inner_vertex_c[0], &inner_vertex_ce[0], &vertex_c[0], &inner_vertex_ca[0] },
+    { &inner_vertex_e[0], &inner_vertex_eg[0], &vertex_e[0], &inner_vertex_ec[0] },
+    { &inner_vertex_g[0], &inner_vertex_ga[0], &vertex_g[0], &inner_vertex_ge[0] }
 };
 
-static void lego(){
+static GLfloat *lego_base_edge_vertices[4][4] = {
+    { &inner_vertex_a[0], &inner_vertex_ac[0], &inner_vertex_ca[0], &inner_vertex_c[0] },
+    { &inner_vertex_c[0], &inner_vertex_ce[0], &inner_vertex_ec[0], &inner_vertex_e[0] },
+    { &inner_vertex_e[0], &inner_vertex_eg[0], &inner_vertex_ge[0], &inner_vertex_g[0] },
+    { &inner_vertex_g[0], &inner_vertex_ga[0], &inner_vertex_ag[0], &inner_vertex_a[0] }
+};
+
+static void quad_cycle(GLfloat *verts[])
+{
+    int i;
+    glBegin(GL_QUAD_STRIP);
+    {
+        for (i = 0; i < 8; i++){
+            glVertex3fv(&verts[i][0]);
+        }
+        glVertex3fv(&verts[0][0]);
+        glVertex3fv(&verts[1][0]);
+    }
+    glEnd();
+
+}
+static GLfloat *lego_inner_face_vertices[8] = {
+    &inner_vertex_a[0], &inner_vertex_b[0], &inner_vertex_c[0], &inner_vertex_d[0],
+    &inner_vertex_e[0], &inner_vertex_f[0], &inner_vertex_g[0], &inner_vertex_h[0]
+};
+
+static void lego_sides(){
+    quad_cycle(lego_side_vertices);
+}
+
+static void lego_inner_faces(){
+    quad_cycle(lego_inner_face_vertices);
+}
+
+static void lego_base_edges(){
     int i, j;
     glBegin(GL_QUADS);
-    for (i = 0; i < 6; i++){
-        for (j = 0; j < 4; j++) {
-            glVertex3fv(&legoverts[legorects[i][j]][0]);
+    {
+        for (i = 0; i < 4; i++){
+            for (j = 0; j < 4; j++){
+                glVertex3fv(&lego_base_edge_vertices[i][j][0]);
+            }
         }
     }
     glEnd();
+}
+
+
+static void lego_base_corners()
+{
+    int i, j;
+    for (i = 0; i < 4; i++) {
+        glBegin(GL_TRIANGLE_FAN);
+        {
+            for (j = 0; j < 4; j++) {
+                glVertex3fv(&lego_base_corner_vertices[i][j][0]);
+            }
+        }
+        glEnd();
+    }
+}
+
+static void lego_base()
+{
+    lego_base_corners();
+    lego_base_edges();
+}
+
+
+static void lego()
+{
+    lego_sides();
+    lego_base();
+    lego_inner_faces();
 }
 
 void init()
 {
     tbInit(GLUT_RIGHT_BUTTON);
     tbAnimate(GL_TRUE);
-    
+
     // Place Camera
     camRotX = 350.0f;
     camRotY = 680.0f;
     camPosX = 0.0f;
     camPosY = 0.0f;
-    camPosZ = -20.0f;
-    
+    camPosZ = -80.0f;
+
     glEnable( GL_DEPTH_TEST );
     glShadeModel(GL_SMOOTH);
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -114,18 +222,18 @@ void drawSelectableTeapots( void )
 {
     float currentColor[4];
     glGetFloatv(GL_CURRENT_COLOR, currentColor);
-    
+
     GLfloat selectedColor[] = {0, 1, 0, 1};
     GLfloat unselectedColor[] = {1, 0, 0, 1};
 
     // Initialize the name stack
     glInitNames();
     glPushName(0);
-    
+
     // Draw two teapots next to each other in z axis
     glPushMatrix();
     {
-    
+
         if( isTeapot1_selected )
             glMaterialfv(GL_FRONT, GL_DIFFUSE, selectedColor);
         else
@@ -142,7 +250,7 @@ void drawSelectableTeapots( void )
         glutSolidTeapot(1.5);
     }
     glPopMatrix();
-    
+
     glColor4fv(currentColor);
 
 }
@@ -154,10 +262,9 @@ void display( void )
     {
         setCamera();
         tbMatrix();
-        
-        glColor3f (1.0, 1.0, 1.0);
-        glCallList(theLego); 
-        
+
+        glCallList(theLego);
+
         // Retrieve current matrice before they popped.
         glGetDoublev( GL_MODELVIEW_MATRIX, modelview );        // Retrieve The Modelview Matrix
         glGetDoublev( GL_PROJECTION_MATRIX, projection );    // Retrieve The Projection Matrix
@@ -177,10 +284,10 @@ void reshape( int w, int h )
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    
+
     // Set the clipping volume
     gluPerspective(30.0f, (GLfloat)w / (GLfloat)h, 1.0f, 100.0f);
-    
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -194,40 +301,40 @@ void keyboard( unsigned char key, int x, int y )
             exit(0);
             break;
         case 'x':
+        case 101: //up arrow key
             glRotatef(1.,1.0,0.0,0.0);
-            glutPostRedisplay();
             break;
         case 'X':
+        case 103: //down arrow key
             glRotatef(-1.,1.0,0.0,0.0);
-            glutPostRedisplay();
             break;
         case 'z':
+        case 100: //left arrow key
             glRotatef(1.,0.0,0.0,1.0);
-            glutPostRedisplay();
             break;
         case 'Z':
+        case 102:
             glRotatef(-1.,0.0,0.0,1.0);
-            glutPostRedisplay();
             break;
         case 'y':
+        case '/':
             glRotatef(1.,0.0,1.0,1.0);
-            glutPostRedisplay();
             break;
         case 'Y':
+        case '.':
             glRotatef(-1.,0.0,1.0,1.0);
-            glutPostRedisplay();
             break;
         case 'i':
         case 'I':
             glLoadIdentity();
             gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0);
-            glutPostRedisplay();
             break;
         case 'r':
             printf("save current screen\n");
             screenshot.capture();
-            break;
+            return;
     }
+    glutPostRedisplay();
 }
 
 void processSelection(int xPos, int yPos)
@@ -270,8 +377,8 @@ void processSelection(int xPos, int yPos)
         {
             setCamera();
             tbMatrixForSelection();
+            glCallList(theLego); 
 
-            drawSelectableTeapots();
         }
         glPopMatrix();
 
