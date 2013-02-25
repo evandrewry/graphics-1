@@ -1,5 +1,5 @@
 /* Simple opengl demo program. 
- */
+*/
 
 //#elif defined(__linux)
 #if defined(__APPLE__) || defined(MACOSX)
@@ -22,6 +22,15 @@ using namespace std;
 #define LEGO_WIDTH 10
 #define WALL_WIDTH 2
 #define LEGO_LENGTH 30
+#define QUAD_CYCLE(verts) \
+{ \
+    int i; \
+    glBegin(GL_QUAD_STRIP); { \
+        for (i = 0; i < 8; i++) glVertex3fv(&verts[i][0]); \
+        glVertex3fv(&verts[0][0]); \
+        glVertex3fv(&verts[1][0]); \
+    } glEnd(); \
+}
 
 GLfloat camRotX, camRotY, camPosX, camPosY, camPosZ;
 GLint viewport[4];
@@ -61,99 +70,239 @@ void initLights(void)
 //LEGO VERTICES
 
 //main eight
-static GLfloat vertex_a[3] = {-LEGO_LENGTH/2, -LEGO_WIDTH/2, 0};
-static GLfloat vertex_b[3] = {-LEGO_LENGTH/2, -LEGO_WIDTH/2, LEGO_HEIGHT};
-static GLfloat vertex_c[3] = {LEGO_LENGTH/2, -LEGO_WIDTH/2, 0};
-static GLfloat vertex_d[3] = {LEGO_LENGTH/2, -LEGO_WIDTH/2, LEGO_HEIGHT};
-static GLfloat vertex_e[3] = {LEGO_LENGTH/2, LEGO_WIDTH/2, 0};
-static GLfloat vertex_f[3] = {LEGO_LENGTH/2, LEGO_WIDTH/2, LEGO_HEIGHT};
-static GLfloat vertex_g[3] = {-LEGO_LENGTH/2, LEGO_WIDTH/2, 0};
-static GLfloat vertex_h[3] = {-LEGO_LENGTH/2, LEGO_WIDTH/2, LEGO_HEIGHT};
-
+static GLfloat vertex_a[3] = {
+    -LEGO_LENGTH/2,
+    -LEGO_WIDTH/2,
+    0};
+static GLfloat vertex_b[3] = {
+    -LEGO_LENGTH/2,
+    -LEGO_WIDTH/2,
+    LEGO_HEIGHT
+};
+static GLfloat vertex_c[3] = {
+    LEGO_LENGTH/2,
+    -LEGO_WIDTH/2,
+    0
+};
+static GLfloat vertex_d[3] = {
+    LEGO_LENGTH/2,
+    -LEGO_WIDTH/2,
+    LEGO_HEIGHT
+};
+static GLfloat vertex_e[3] = {
+    LEGO_LENGTH/2,
+    LEGO_WIDTH/2,
+    0
+};
+static GLfloat vertex_f[3] = {
+    LEGO_LENGTH/2,
+    LEGO_WIDTH/2,
+    LEGO_HEIGHT
+};
+static GLfloat vertex_g[3] = {
+    -LEGO_LENGTH/2,
+    LEGO_WIDTH/2,
+    0
+};
+static GLfloat vertex_h[3] = {
+    -LEGO_LENGTH/2,
+    LEGO_WIDTH/2,
+    LEGO_HEIGHT
+};
+static GLfloat inner_vertex_a[3] = {
+    -(LEGO_LENGTH/2 - WALL_WIDTH),
+    -(LEGO_WIDTH/2 - WALL_WIDTH),
+    0
+};
+static GLfloat inner_vertex_ag[3] = {
+    -LEGO_LENGTH/2,
+    -(LEGO_WIDTH/2 - WALL_WIDTH),
+    0
+};
+static GLfloat inner_vertex_ac[3] = {
+    -(LEGO_LENGTH/2 - WALL_WIDTH),
+    -LEGO_WIDTH/2,
+    0
+};
+static GLfloat inner_vertex_c[3] =  {
+    LEGO_LENGTH/2 - WALL_WIDTH,
+    -(LEGO_WIDTH/2 - WALL_WIDTH),
+    0
+};
+static GLfloat inner_vertex_ca[3] = {
+    LEGO_LENGTH/2 - WALL_WIDTH,
+    -LEGO_WIDTH/2,
+    0
+};
+static GLfloat inner_vertex_ce[3] = {
+    LEGO_LENGTH/2,
+    -(LEGO_WIDTH/2 - WALL_WIDTH),
+    0
+};
+static GLfloat inner_vertex_e[3] = {
+    LEGO_LENGTH/2 - WALL_WIDTH,
+    LEGO_WIDTH/2 - WALL_WIDTH,
+    0
+};
+static GLfloat inner_vertex_ec[3] = {
+    LEGO_LENGTH/2,
+    (LEGO_WIDTH/2 - WALL_WIDTH),
+    0
+};
+static GLfloat inner_vertex_eg[3] = {
+    LEGO_LENGTH/2 - WALL_WIDTH,
+    LEGO_WIDTH/2,
+    0
+};
+static GLfloat inner_vertex_g[3] =  {
+    -(LEGO_LENGTH/2 - WALL_WIDTH),
+    LEGO_WIDTH/2 - WALL_WIDTH,
+    0
+};
+static GLfloat inner_vertex_ge[3] = {
+    -(LEGO_LENGTH/2 - WALL_WIDTH),
+    LEGO_WIDTH/2,
+    0
+};
+static GLfloat inner_vertex_ga[3] = {
+    -LEGO_LENGTH/2,
+    LEGO_WIDTH/2 - WALL_WIDTH,
+    0
+};
+static GLfloat inner_vertex_b[3] =  {
+    -(LEGO_LENGTH/2 - WALL_WIDTH),
+    -(LEGO_WIDTH/2 - WALL_WIDTH),
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_bd[3] = {
+   -(LEGO_LENGTH/2 - WALL_WIDTH),
+   -LEGO_WIDTH/2,
+   LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_bh[3] = {
+    -LEGO_LENGTH/2,
+    -(LEGO_WIDTH/2 - WALL_WIDTH),
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_h[3] =  {
+    -(LEGO_LENGTH/2 - WALL_WIDTH),
+    LEGO_WIDTH/2 - WALL_WIDTH,
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_hd[3] = {
+    -(LEGO_LENGTH/2 - WALL_WIDTH),
+    -LEGO_WIDTH/2,
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_hh[3] = {
+    -LEGO_LENGTH/2,
+    -(LEGO_WIDTH/2 - WALL_WIDTH),
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_d[3] =  {
+    LEGO_LENGTH/2 - WALL_WIDTH,
+    -(LEGO_WIDTH/2 - WALL_WIDTH),
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_db[3] = {
+    LEGO_LENGTH/2 - WALL_WIDTH,
+    -LEGO_WIDTH/2,
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_df[3] = {
+    LEGO_LENGTH/2,
+    -(LEGO_WIDTH/2 - WALL_WIDTH),
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_f[3] =  {
+    LEGO_LENGTH/2 - WALL_WIDTH,
+    LEGO_WIDTH/2 - WALL_WIDTH,
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_fh[3] = {
+    LEGO_LENGTH/2 - WALL_WIDTH,
+    LEGO_WIDTH/2,
+    LEGO_HEIGHT - WALL_WIDTH
+};
+static GLfloat inner_vertex_fd[3] = {
+    LEGO_LENGTH/2,
+    LEGO_WIDTH/2 - WALL_WIDTH,
+    LEGO_HEIGHT - WALL_WIDTH
+};
 static GLfloat *lego_side_vertices[8] = {
     &vertex_a[0], &vertex_b[0],
     &vertex_c[0], &vertex_d[0],
     &vertex_e[0], &vertex_f[0],
     &vertex_g[0], &vertex_h[0]
 };
-
-static GLfloat inner_vertex_a[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -(LEGO_WIDTH/2 - WALL_WIDTH), 0};
-static GLfloat inner_vertex_ag[3] = {-LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), 0};
-static GLfloat inner_vertex_ac[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, 0};
-static GLfloat inner_vertex_c[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), -(LEGO_WIDTH/2 - WALL_WIDTH), 0};
-static GLfloat inner_vertex_ca[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, 0};
-static GLfloat inner_vertex_ce[3] = {LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), 0};
-static GLfloat inner_vertex_e[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), (LEGO_WIDTH/2 - WALL_WIDTH), 0};
-static GLfloat inner_vertex_ec[3] = {LEGO_LENGTH/2, (LEGO_WIDTH/2 - WALL_WIDTH), 0};
-static GLfloat inner_vertex_eg[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), LEGO_WIDTH/2, 0};
-static GLfloat inner_vertex_g[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), (LEGO_WIDTH/2 - WALL_WIDTH), 0};
-static GLfloat inner_vertex_ge[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), LEGO_WIDTH/2, 0};
-static GLfloat inner_vertex_ga[3] = {-LEGO_LENGTH/2, (LEGO_WIDTH/2 - WALL_WIDTH), 0};
-static GLfloat inner_vertex_b[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_bd[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_bh[3] = {-LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_h[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), (LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_hd[3] = {-(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_hh[3] = {-LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_d[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_db[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), -LEGO_WIDTH/2, LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_df[3] = {LEGO_LENGTH/2, -(LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_f[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), (LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_fh[3] = {(LEGO_LENGTH/2 - WALL_WIDTH), LEGO_WIDTH/2, LEGO_HEIGHT - WALL_WIDTH};
-static GLfloat inner_vertex_fd[3] = {LEGO_LENGTH/2, (LEGO_WIDTH/2 - WALL_WIDTH), LEGO_HEIGHT - WALL_WIDTH};
-
 static GLfloat *lego_base_corner_vertices[4][4] = {
-    { &inner_vertex_a[0], &inner_vertex_ac[0], &vertex_a[0], &inner_vertex_ag[0] },
-    { &inner_vertex_c[0], &inner_vertex_ce[0], &vertex_c[0], &inner_vertex_ca[0] },
-    { &inner_vertex_e[0], &inner_vertex_eg[0], &vertex_e[0], &inner_vertex_ec[0] },
-    { &inner_vertex_g[0], &inner_vertex_ga[0], &vertex_g[0], &inner_vertex_ge[0] }
+    {   &inner_vertex_a[0],
+        &inner_vertex_ac[0],
+        &vertex_a[0],
+        &inner_vertex_ag[0]
+    },{ &inner_vertex_c[0],
+        &inner_vertex_ce[0],
+        &vertex_c[0],
+        &inner_vertex_ca[0]
+    },{ &inner_vertex_e[0],
+        &inner_vertex_eg[0],
+        &vertex_e[0],
+        &inner_vertex_ec[0]
+    },{ &inner_vertex_g[0],
+        &inner_vertex_ga[0],
+        &vertex_g[0],
+        &inner_vertex_ge[0]
+    }
 };
 
 static GLfloat *lego_base_edge_vertices[4][4] = {
-    { &inner_vertex_a[0], &inner_vertex_ac[0], &inner_vertex_ca[0], &inner_vertex_c[0] },
-    { &inner_vertex_c[0], &inner_vertex_ce[0], &inner_vertex_ec[0], &inner_vertex_e[0] },
-    { &inner_vertex_e[0], &inner_vertex_eg[0], &inner_vertex_ge[0], &inner_vertex_g[0] },
-    { &inner_vertex_g[0], &inner_vertex_ga[0], &inner_vertex_ag[0], &inner_vertex_a[0] }
+    {   &inner_vertex_a[0],
+        &inner_vertex_ac[0],
+        &inner_vertex_ca[0],
+        &inner_vertex_c[0]
+    },{ &inner_vertex_c[0],
+        &inner_vertex_ce[0],
+        &inner_vertex_ec[0],
+        &inner_vertex_e[0]
+    },{ &inner_vertex_e[0],
+        &inner_vertex_eg[0],
+        &inner_vertex_ge[0],
+        &inner_vertex_g[0]
+    },{ &inner_vertex_g[0],
+        &inner_vertex_ga[0],
+        &inner_vertex_ag[0],
+        &inner_vertex_a[0]
+    }
 };
 
-static void quad_cycle(GLfloat *verts[])
-{
-    int i;
-    glBegin(GL_QUAD_STRIP);
-    {
-        for (i = 0; i < 8; i++){
-            glVertex3fv(&verts[i][0]);
-        }
-        glVertex3fv(&verts[0][0]);
-        glVertex3fv(&verts[1][0]);
-    }
-    glEnd();
-
-}
 static GLfloat *lego_inner_face_vertices[8] = {
-    &inner_vertex_a[0], &inner_vertex_b[0], &inner_vertex_c[0], &inner_vertex_d[0],
-    &inner_vertex_e[0], &inner_vertex_f[0], &inner_vertex_g[0], &inner_vertex_h[0]
+    &inner_vertex_a[0],
+    &inner_vertex_b[0],
+    &inner_vertex_c[0],
+    &inner_vertex_d[0],
+    &inner_vertex_e[0],
+    &inner_vertex_f[0],
+    &inner_vertex_g[0],
+    &inner_vertex_h[0]
 };
 
 static void lego_sides(){
-    quad_cycle(lego_side_vertices);
+    QUAD_CYCLE(lego_side_vertices);
 }
 
 static void lego_inner_faces(){
-    quad_cycle(lego_inner_face_vertices);
+    QUAD_CYCLE(lego_inner_face_vertices);
 }
 
 static void lego_base_edges(){
     int i, j;
-    glBegin(GL_QUADS);
-    {
+    glBegin(GL_QUADS);{
         for (i = 0; i < 4; i++){
             for (j = 0; j < 4; j++){
                 glVertex3fv(&lego_base_edge_vertices[i][j][0]);
             }
         }
-    }
-    glEnd();
+    } glEnd();
 }
 
 
@@ -161,13 +310,11 @@ static void lego_base_corners()
 {
     int i, j;
     for (i = 0; i < 4; i++) {
-        glBegin(GL_TRIANGLE_FAN);
-        {
+        glBegin(GL_TRIANGLE_FAN); {
             for (j = 0; j < 4; j++) {
                 glVertex3fv(&lego_base_corner_vertices[i][j][0]);
             }
-        }
-        glEnd();
+        } glEnd();
     }
 }
 
