@@ -21,5 +21,16 @@
 #define NUM_PEG_VERTICES 100
 #define STRUT_HEIGHT (LEGO_HEIGHT * 0.75)
 
+//LEGO COLORS
+extern const GLfloat green[4]; 
+extern const GLfloat yellow[4];
+extern const GLfloat white[4]; 
+extern const GLfloat cyan[4];
+extern const GLfloat red[4];
+extern const GLfloat blue[4];
+extern const GLfloat black[4];
+
 void lego();
+void legofan(const GLfloat *[4]);
+void legotess(int, int, const GLfloat *[4]);
 void multilego(int);

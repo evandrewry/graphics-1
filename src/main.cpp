@@ -14,15 +14,18 @@
 using namespace std;
 
 #define BUFFER_LENGTH 64
+#define GRID_WIDTH 1000
+#define GRID_GRANULARITY 10
+#define CAMERA_MOVEMENT_GRANULARITY 10
 
-GLfloat camRotX, camRotY, camPosX, camPosY, camPosZ;
+GLfloat camRotX, camRotY, camRotZ, camPosX, camPosY, camPosZ;
 GLint viewport[4];
 GLdouble modelview[16];
 GLdouble projection[16];
 
 GLuint pickedObj = -1;
 GLuint legoDL;
-static int howMany = 100;
+static int howMany = 5;
 
 char titleString[150];
 
@@ -72,6 +75,7 @@ void init()
     // Place Camera
     camRotX = 120.0f;
     camRotY = 180.0f;
+    camRotZ = 0.f;
     camPosX = 0.0f;
     camPosY = 0.0f;
     camPosZ = -150.0f;
@@ -99,8 +103,34 @@ void setCamera( void )
     glTranslatef(0, 0, camPosZ);
     glRotatef(camRotX, 1, 0, 0);
     glRotatef(camRotY, 0, 1, 0);
+    glRotatef(camRotZ, 0, 0, 1);
 }
 
+void grid()
+{
+    unsigned int x, y;
+    glPushMatrix(); {
+        glTranslatef(-GRID_WIDTH / 2, -GRID_WIDTH / 2, -1.5 * LEGO_HEIGHT);
+        glBegin(GL_QUADS); {
+            for (x = 0; x < GRID_WIDTH; ++x)
+                for (y = 0; y < GRID_WIDTH; ++y) {
+                    if ((x+y) & 0x00000001) //modulo 2
+                        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, white); 
+                    else
+                        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+         
+                    glNormal3f(0., 0., 1);
+                    glVertex3f(x * GRID_GRANULARITY, y * GRID_GRANULARITY, 0);
+                    glNormal3f(0., 0., 1);
+                    glVertex3f((x+1) * GRID_GRANULARITY, y * GRID_GRANULARITY, 0);
+                    glNormal3f(0., 0., 1);
+                    glVertex3f((x+1) * GRID_GRANULARITY, (y+1) * GRID_GRANULARITY, 0);
+                    glNormal3f(0., 0., 1);
+                    glVertex3f(x * GRID_GRANULARITY, (y+1) * GRID_GRANULARITY, 0);
+                }
+        } glEnd();
+    } glPopMatrix();
+}
 void display( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -109,8 +139,21 @@ void display( void )
         setCamera();
         tbMatrix();
 
+        const GLfloat *colors[4];
+        colors[0] = &blue[0]; colors[1] = &yellow[0];
+        colors[2] = &white[0]; colors[3] = &green[0];
+        legotess(2, 2, colors);
+        glPushMatrix();
+        glTranslatef(0, 0, -LEGO_HEIGHT);
+        colors[0] = &red[0]; colors[1] = &blue[0];
+        colors[2] = &black[0]; colors[3] = &green[0];
+        legotess(4,4,colors);
+        glPopMatrix();
+        glTranslatef(0, 0, LEGO_HEIGHT * 2.5);
         multilego(howMany);
         //glCallList(legoDL);
+
+
 
         // Retrieve current matrice before they popped.
         glGetDoublev( GL_MODELVIEW_MATRIX, modelview );        // Retrieve The Modelview Matrix
@@ -153,38 +196,44 @@ void keyboard( unsigned char key, int x, int y )
             glutPostRedisplay();
             break;
         case 'Q':
-            howMany--;
+            howMany-= CAMERA_MOVEMENT_GRANULARITY;
             printf("draw less\n");
             glutPostRedisplay();
             break;
-        case 'x':
-        case 101: //up arrow key
-            camRotX++;
+        case 'k':
+            camRotX += CAMERA_MOVEMENT_GRANULARITY;
             glutPostRedisplay();
             break;
-        case 'X':
-        case 103: //down arrow key
-            camRotX--;
+        case 'j':
+            camRotX -= CAMERA_MOVEMENT_GRANULARITY;
             glutPostRedisplay();
             break;
-        case 'z':
-        case 100: //left arrow key
-            camPosZ++;
+        case '+':
+        case '=':
+            camPosZ += CAMERA_MOVEMENT_GRANULARITY;
             glutPostRedisplay();
             break;
-        case 'Z':
-        case 102:
-            camPosZ--;
+        case '-':
+        case '_':
+            camPosZ -= CAMERA_MOVEMENT_GRANULARITY;
+            glutPostRedisplay();
+            break;
+        case 'h':
+            camRotZ += CAMERA_MOVEMENT_GRANULARITY;
+            glutPostRedisplay();
+            break;
+        case 'l':
+            camRotZ -= CAMERA_MOVEMENT_GRANULARITY;
             glutPostRedisplay();
             break;
         case 'y':
         case '/':
-            camRotY++;
+            camRotY += CAMERA_MOVEMENT_GRANULARITY;
             glutPostRedisplay();
             break;
         case 'Y':
         case '.':
-            camRotY--;
+            camRotY -= CAMERA_MOVEMENT_GRANULARITY;
             glutPostRedisplay();
             break;
         case 'i':

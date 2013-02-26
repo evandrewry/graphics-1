@@ -4,7 +4,9 @@
 #   include <GL/glut.h>
 #endif
 #include <math.h>
+#include <stdlib.h>
 #include "lego.h"
+
 
 
 using namespace std;
@@ -14,13 +16,13 @@ static GLuint dl, multidl;
 static bool initialized = false;
 
 //LEGO COLORS
-GLfloat green[] = {40./255, 127./255, 70./255, 1};
-GLfloat yellow[] = {1, 1, 0, 1};
-GLfloat white[] = {1, 1, 1, 1};
-GLfloat cyan[] = {0, 1, 1, 1};
-GLfloat red[] = {1, 0, 0, 1};
-GLfloat blue[] = {0, 0, 1, 1};
-GLfloat black[] = {0.1, 0.1, 0.1, 1};
+const GLfloat green[4] = {40./255, 127./255, 70./255, 1};
+const GLfloat yellow[4] = {1, 1, 0, 1};
+const GLfloat white[4] = {1, 1, 1, 1};
+const GLfloat cyan[4] = {0, 1, 1, 1};
+const GLfloat red[4] = {1, 0, 0, 1};
+const GLfloat blue[4] = {0, 0, 1, 1};
+const GLfloat black[4] = {0.1, 0.1, 0.1, 1};
 
 //LEGO VERTICES
 
@@ -699,9 +701,46 @@ void lego()
     glPopMatrix();
 }
 
+void legofan(const GLfloat *colors[4])
+{
+    glPushMatrix();
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colors[0]);
+        glTranslatef(LEGO_LENGTH / 2, LEGO_WIDTH / 2, LEGO_HEIGHT / 2);
+        lego();
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colors[2]);
+        glTranslatef(-LEGO_LENGTH, -LEGO_WIDTH, 0);
+        lego();
+    glPopMatrix();
+    glPushMatrix();
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colors[1]);
+        glRotatef(90., 0, 0, 1);
+        glTranslatef(LEGO_LENGTH / 2, LEGO_WIDTH / 2, LEGO_HEIGHT / 2);
+        lego();
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colors[3]);
+        glTranslatef(-LEGO_LENGTH, -LEGO_WIDTH, 0);
+        lego();
+    glPopMatrix();
+
+}
+
+void legotess(int x, int y, const GLfloat *colors[4])
+{
+    int i, j;
+    glPushMatrix();
+        glTranslatef(-(LEGO_LENGTH + LEGO_WIDTH) * x / 2, -(LEGO_LENGTH + LEGO_WIDTH) * y / 2, 0);
+        for (i = 0; i < x; i++) {
+                glPushMatrix();
+            for (j = 0; j < y; j++) {
+                legofan(colors);
+                glTranslatef(0, LEGO_LENGTH + LEGO_WIDTH, 0);
+            }
+                glPopMatrix();
+                glTranslatef(LEGO_LENGTH + LEGO_WIDTH, 0, 0);
+        }
+    glPopMatrix();
+}
 void multilego(int max)
 {
-    initLego();
 
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
     
