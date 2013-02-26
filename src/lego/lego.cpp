@@ -7,24 +7,24 @@
 
 using namespace std;
 
-#define LEGO_HEIGHT 10
-#define LEGO_WIDTH 20
-#define WALL_WIDTH 2
-#define LEGO_LENGTH 30
-#define PEG_HEIGHT 3
-#define PEG_RADIUS 3
-#define NUM_PEG_VERTICES 30
-#define QUAD_CYCLE(verts, n) \
-{ \
-    int i; \
-    glBegin(GL_QUAD_STRIP); { \
-        for (i = 0; i < n; i++) glVertex3fv(&verts[i][0]); \
-        glVertex3fv(&verts[0][0]); \
-        glVertex3fv(&verts[1][0]); \
-    } glEnd(); \
-}
+#define LEGO_HEIGHT (LEGO_WIDTH * 0.6)
+#define LEGO_WIDTH 18.0
+#define WALL_WIDTH (LEGO_WIDTH / 18.0)
+#define LEGO_LENGTH (LEGO_WIDTH * 1.5)
+#define PEG_HEIGHT (LEGO_HEIGHT / 6.0)
+#define PEG_RADIUS (LEGO_WIDTH / 6.0)
+#define INNER_PEG_RADIUS (LEGO_WIDTH * 0.2)
+#define PEG_EDGE_TO_EDGE_DISTANCE \
+    ((LEGO_LENGTH - (6.0 * PEG_RADIUS)) / 3.0)
+#define PEG_CENTER_TO_CENTER_DISTANCE \
+    (2 * PEG_RADIUS + PEG_EDGE_TO_EDGE_DISTANCE)
+#define STRUT_WIDTH WALL_WIDTH
+#define STRUT_LENGTH  \
+    ((LEGO_WIDTH - 2 * WALL_WIDTH - 2 * INNER_PEG_RADIUS) / 2)
+#define NUM_PEG_VERTICES 100
+#define STRUT_HEIGHT (LEGO_HEIGHT * 0.75)
 
-GLuint pegDL, blockDL, index;
+static GLuint dl;
 
 //LEGO VERTICES
 
@@ -248,32 +248,80 @@ static GLfloat *lego_inner_face_vertices[8] = {
 
 static GLfloat peg_base_center[3] = {
     0,
-    LEGO_WIDTH/4,
+    0,
     LEGO_HEIGHT/2
 };
 
 static GLfloat peg_top_center[3] = {
     0,
-    LEGO_WIDTH/4,
+    0,
     LEGO_HEIGHT/2 + PEG_HEIGHT
 };
 
+static GLfloat inner_peg_base_center[3] = {
+    0,
+    0,
+    -LEGO_HEIGHT/2
+};
+
+static GLfloat inner_peg_top_center[3] = {
+    0,
+    0,
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
 static GLfloat peg_base_vertices[NUM_PEG_VERTICES][3];
 static GLfloat peg_top_vertices[NUM_PEG_VERTICES][3];
 static GLfloat peg_face_vertices[NUM_PEG_VERTICES * 2][3];
 
+static GLfloat inner_peg_base_vertices[NUM_PEG_VERTICES][3];
+static GLfloat inner_peg_top_vertices[NUM_PEG_VERTICES][3];
+static GLfloat inner_peg_face_vertices[NUM_PEG_VERTICES * 2][3];
+static GLfloat inner_inner_peg_base_vertices[NUM_PEG_VERTICES][3];
+static GLfloat inner_inner_peg_top_vertices[NUM_PEG_VERTICES][3];
+static GLfloat inner_inner_peg_face_vertices[NUM_PEG_VERTICES * 2][3];
+static GLfloat inner_peg_base_face_vertices[NUM_PEG_VERTICES * 2][3];
+
 
 static void lego_sides()
 {
-    QUAD_CYCLE(lego_side_vertices, 8);
+    int i;
+    GLfloat normal[3] = {0, 0, 0};
+
+    glBegin(GL_QUADS); {
+        for (i = 0; i < 8; i += 2) {
+            switch (i) {
+                case 0: normal[1] = -1; break;
+                case 2: normal[0] = 1; break;
+                case 4: normal[1] = 1; break;
+                case 6: normal[0] = -1; break;
+                default: exit(1);
+            }
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&lego_side_vertices[i][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&lego_side_vertices[(i + 1) % 8][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&lego_side_vertices[(i + 3) % 8][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&lego_side_vertices[(i + 2) % 8][0]);
+        }
+    } glEnd();
 }
 
 static void lego_top()
 {
     glBegin(GL_QUADS); {
+        glNormal3f(0.,0.,1.0);
+        //glNormal3fv(vertex_b);
         glVertex3fv(vertex_b);
+        glNormal3f(0.,0.,1.0);
+        //glNormal3fv(vertex_d);
         glVertex3fv(vertex_d);
+        glNormal3f(0.,0.,1.0);
+        //glNormal3fv(vertex_f);
         glVertex3fv(vertex_f);
+        glNormal3f(0.,0.,1.0);
+        //glNormal3fv(vertex_h);
         glVertex3fv(vertex_h);
     } glEnd();
 }
@@ -281,20 +329,155 @@ static void lego_top()
 static void lego_top_inner()
 {
     glBegin(GL_QUADS); {
+        glNormal3f(0.,0.,-1.0);
         glVertex3fv(inner_vertex_b);
+        glNormal3f(0.,0.,-1.0);
         glVertex3fv(inner_vertex_d);
+        glNormal3f(0.,0.,-1.0);
         glVertex3fv(inner_vertex_f);
+        glNormal3f(0.,0.,-1.0);
         glVertex3fv(inner_vertex_h);
     } glEnd();
 }
 
+
+
+static GLfloat *subtractv(GLfloat *v1, GLfloat *v2, int len)
+{
+    int i;
+    GLfloat *out = (GLfloat *) malloc(len * sizeof(GLfloat));
+    for (i = 0; i < len; i++) {
+        out[i] = v1[i] - v2[i];
+    }
+    return out;
+}
+static GLfloat *negatev(GLfloat *vector, int len)
+{
+    int i;
+    GLfloat *out = (GLfloat *) malloc(len * sizeof(GLfloat));
+    for (i = 0; i < len; i++) {
+        out[i] = -vector[i];
+    }
+    return out;
+}
 static void lego_inner_faces()
 {
-    QUAD_CYCLE(lego_inner_face_vertices, 8);
+    int i;
+    glBegin(GL_QUAD_STRIP); {
+        for (i = 0; i < 8; i++) {
+            glNormal3fv(&lego_inner_face_vertices[i][0]);
+            glVertex3fv(&lego_inner_face_vertices[i][0]);
+        }
+        glNormal3fv(negatev(&lego_inner_face_vertices[0][0], 3));
+        glVertex3fv(&lego_inner_face_vertices[0][0]);
+        glNormal3fv(negatev(&lego_inner_face_vertices[1][0], 3));
+        glVertex3fv(&lego_inner_face_vertices[1][0]);
+    } glEnd();
+    //QUAD_CYCLE(lego_inner_face_vertices, 8);
+}
+
+static void strut()
+{
+    int i;
+    glBegin(GL_QUADS); {
+        glNormal3f(-1,0,0);
+        glVertex3f(-STRUT_WIDTH / 2, -STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH);
+        glNormal3f(-1,0,0);
+        glVertex3f(-STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH);
+        glNormal3f(-1,0,0);
+        glVertex3f(-STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
+        glNormal3f(-1,0,0);
+        glVertex3f(-STRUT_WIDTH / 2, -STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
+
+        
+        glNormal3f(0,0,-1);
+        glVertex3f(-STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
+        glNormal3f(0,0,-1);
+        glVertex3f(-STRUT_WIDTH / 2, -STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
+        glNormal3f(0,0,-1);
+        glVertex3f(STRUT_WIDTH / 2, -STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
+        glNormal3f(0,0,-1);
+        glVertex3f(STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
+        
+        glNormal3f(1,0,0);
+        glVertex3f(STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
+        glNormal3f(1,0,0);
+        glVertex3f(STRUT_WIDTH / 2, -STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
+        glNormal3f(1,0,0);
+        glVertex3f(STRUT_WIDTH / 2, -STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH);
+        glNormal3f(1,0,0);
+        glVertex3f(STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH);
+
+    } glEnd();
+}
+
+static void inner_peg()
+{
+    //outer faces
+    int i;
+    glBegin(GL_QUAD_STRIP); {
+        for (i = 0; i < NUM_PEG_VERTICES * 2; i += 2) {
+            glNormal3fv(subtractv(&inner_peg_face_vertices[i][0], &inner_peg_base_center[0], 3));
+            glVertex3fv(&inner_peg_face_vertices[i][0]);
+            glNormal3fv(subtractv(&inner_peg_face_vertices[i + 1][0], &inner_peg_top_center[0], 3));
+            glVertex3fv(&inner_peg_face_vertices[i + 1][0]);
+        }
+        glNormal3fv(subtractv(&inner_peg_face_vertices[0][0], &inner_peg_base_center[0], 3));
+        glVertex3fv(&inner_peg_face_vertices[0][0]);
+        glNormal3fv(subtractv(&inner_peg_face_vertices[1][0], &inner_peg_top_center[0], 3));
+        glVertex3fv(&inner_peg_face_vertices[1][0]);
+    } glEnd();
+
+    //inner faces
+    glBegin(GL_QUAD_STRIP); {
+        for (i = 0; i < NUM_PEG_VERTICES * 2; i += 2) {
+            glNormal3fv(negatev(subtractv(&inner_inner_peg_face_vertices[i][0],
+                        &inner_peg_base_center[0], 3), 3));
+            glVertex3fv(&inner_inner_peg_face_vertices[i][0]);
+
+            glNormal3fv(negatev(subtractv(&inner_inner_peg_face_vertices[i + 1][0],
+                        &inner_peg_top_center[0], 3), 3));
+            glVertex3fv(&inner_inner_peg_face_vertices[i + 1][0]);
+        }
+        glNormal3fv(negatev(subtractv(&inner_inner_peg_face_vertices[0][0],
+                    &inner_peg_base_center[0], 3), 3));
+        glVertex3fv(&inner_inner_peg_face_vertices[0][0]);
+
+        glNormal3fv(negatev(subtractv(&inner_inner_peg_face_vertices[1][0],
+                    &inner_peg_top_center[0], 3), 3));
+        glVertex3fv(&inner_inner_peg_face_vertices[1][0]);
+    } glEnd();
+
+    //base faces
+    glBegin(GL_TRIANGLE_STRIP); {
+        for (i = 0; i < NUM_PEG_VERTICES; i++) {
+            glNormal3f(0.,0.,-1.);
+            glVertex3fv(&inner_inner_peg_base_vertices[i][0]);
+            glNormal3f(0.,0.,-1.);
+            glVertex3fv(&inner_peg_base_vertices[i][0]);
+        }
+        glNormal3f(0.,0.,-1.);
+        glVertex3fv(&inner_inner_peg_base_vertices[0][0]);
+        glNormal3f(0.,0.,-1.);
+        glVertex3fv(&inner_peg_base_vertices[0][0]);
+    } glEnd();
 }
 
 static void lego_peg_faces() {
-    QUAD_CYCLE(peg_face_vertices, NUM_PEG_VERTICES * 2);
+    int i;
+    glBegin(GL_QUAD_STRIP); {
+        for (i = 0; i < NUM_PEG_VERTICES * 2; i += 2) {
+            glNormal3fv(subtractv(&peg_face_vertices[i][0], &peg_base_center[0], 3));
+            glVertex3fv(&peg_face_vertices[i][0]);
+            glNormal3fv(subtractv(&peg_face_vertices[i + 1][0], &peg_top_center[0], 3));
+            glVertex3fv(&peg_face_vertices[i + 1][0]);
+        }
+        glNormal3fv(subtractv(&peg_face_vertices[0][0], &peg_base_center[0], 3));
+        glVertex3fv(&peg_face_vertices[0][0]);
+        glNormal3fv(subtractv(&peg_face_vertices[1][0], &peg_top_center[0], 3));
+        glVertex3fv(&peg_face_vertices[1][0]);
+    } glEnd();
+    //QUAD_CYCLE(peg_face_vertices, NUM_PEG_VERTICES * 2);
 }
     
 
@@ -304,22 +487,44 @@ static void lego_base_edges()
     glBegin(GL_QUADS);{
         for (i = 0; i < 4; i++){
             for (j = 0; j < 4; j++){
+                glNormal3f(0.,0.,-1.0);
                 glVertex3fv(&lego_base_edge_vertices[i][j][0]);
             }
         }
     } glEnd();
 }
-
+static float font_shear[] = { 
+    1,   0, 0, 0, 
+    0.8, 1, 0, 0,
+    0,   0, 1, 0,
+    0,   0, 0, 1 
+};
 static void lego_peg_top() {
     int i;
+    char *c;
     glBegin(GL_TRIANGLE_FAN); {
+        glNormal3f(0.,0.,1.0);
         glVertex3fv(peg_top_center);
         for (i = 0; i < NUM_PEG_VERTICES; i++) {
+            glNormal3f(0.,0.,1.0);
             glVertex3fv(peg_top_vertices[i]);
         }
+        glNormal3f(0.,0.,1.0);
         glVertex3fv(peg_top_vertices[0]);
     } glEnd();
-
+    glPushMatrix();
+    {
+        glRotatef(-90., 0., 0., 1.);
+        glTranslatef(peg_top_center[0] - PEG_RADIUS * 0.8,
+                peg_top_center[1] - PEG_RADIUS * 0.2, peg_top_center[2] + .05);
+        glScalef(0.01, 0.01, 0.01);
+        glMultMatrixf(font_shear);
+        for (c = (char *) "LEGO"; *c != '\0'; c++) {
+            glutStrokeCharacter(GLUT_STROKE_ROMAN, *c);
+            glTranslatef(25, 0, 0);
+        }
+    }
+    glPopMatrix();
 }
 
 
@@ -329,6 +534,7 @@ static void lego_base_corners()
     for (i = 0; i < 4; i++) {
         glBegin(GL_TRIANGLE_FAN); {
             for (j = 0; j < 4; j++) {
+                glNormal3f(0.,0.,-1.0);
                 glVertex3fv(&lego_base_corner_vertices[i][j][0]);
             }
         } glEnd();
@@ -347,43 +553,43 @@ static void peg()
     lego_peg_top();
 }
 
-static void initPegs() {
-    int i;
-    GLfloat x, y, *bfv, *bv, *tfv, *tv;
-    for (i = 0; i < NUM_PEG_VERTICES; i++) {
-        x = peg_base_center[0] + PEG_RADIUS * cos(2 * M_PI * i / NUM_PEG_VERTICES);
-        y = peg_base_center[1] + PEG_RADIUS * sin(2 * M_PI * i / NUM_PEG_VERTICES);
+//static void initPegs() {
+    //int i;
+    //GLfloat x, y, *bfv, *bv, *tfv, *tv;
+    //for (i = 0; i < NUM_PEG_VERTICES; i++) {
+        //x = peg_base_center[0] + PEG_RADIUS * cos(2 * M_PI * i / NUM_PEG_VERTICES);
+        //y = peg_base_center[1] + PEG_RADIUS * sin(2 * M_PI * i / NUM_PEG_VERTICES);
 
-        bfv = peg_face_vertices[2 * i];
-        bv = peg_base_vertices[i];
-        tfv = peg_face_vertices[2 * i + 1];
-        tv = peg_top_vertices[i];
+        //bfv = peg_face_vertices[2 * i];
+        //bv = peg_base_vertices[i];
+        //tfv = peg_face_vertices[2 * i + 1];
+        //tv = peg_top_vertices[i];
 
-        bfv[0] = bv[0] = tfv[0] = tv[0] = x; 
-        bfv[1] = bv[1] = tfv[1] = bv[1] = y; 
-        bfv[2] = bv[2] = LEGO_HEIGHT/2;
-        tfv[2] = tv[2] = LEGO_HEIGHT/2 + PEG_HEIGHT;
-    }
+        //bfv[0] = bv[0] = tfv[0] = tv[0] = x; 
+        //bfv[1] = bv[1] = tfv[1] = bv[1] = y; 
+        //bfv[2] = bv[2] = LEGO_HEIGHT/2;
+        //tfv[2] = tv[2] = LEGO_HEIGHT/2 + PEG_HEIGHT;
+    //}
     
     
-    pegDL = glGenLists (1);
-    glNewList(pegDL, GL_COMPILE); {
-        peg();
-    } glEndList();
-}
+    //pegDL = glGenLists (1);
+    //glNewList(pegDL, GL_COMPILE); {
+        //peg();
+    //} glEndList();
+//}
 
-static void initBlock() {
-    blockDL = glGenLists (1);
-    glNewList(blockDL, GL_COMPILE); {
-        lego_sides();
-        lego_base();
-        lego_inner_faces();
-    } glEndList();
-}
+//static void initBlock() {
+    //blockDL = glGenLists (1);
+    //glNewList(blockDL, GL_COMPILE); {
+        //lego_sides();
+        //lego_base();
+        //lego_inner_faces();
+    //} glEndList();
+/*}*/
 
 static void initLego() {
     int i;
-    GLfloat x, y, *bfv, *bv, *tfv, *tv;
+    GLfloat x, y, *bfv, *bv, *tfv, *tv, *ibv, *itv, *itfv, *ibfv;
     for (i = 0; i < NUM_PEG_VERTICES; i++) {
         x = peg_base_center[0] + PEG_RADIUS * cos(2 * M_PI * i / NUM_PEG_VERTICES);
         y = peg_base_center[1] + PEG_RADIUS * sin(2 * M_PI * i / NUM_PEG_VERTICES);
@@ -398,61 +604,82 @@ static void initLego() {
         bfv[2] = bv[2] = LEGO_HEIGHT/2;
         tfv[2] = tv[2] = LEGO_HEIGHT/2 + PEG_HEIGHT;
     }
+    for (i = 0; i < NUM_PEG_VERTICES; i++) {
+        x = INNER_PEG_RADIUS * cos(2 * M_PI * i / NUM_PEG_VERTICES);
+        y = INNER_PEG_RADIUS * sin(2 * M_PI * i / NUM_PEG_VERTICES);
 
-    //pegDL = glGenLists(1);
-    //glNewList(pegDL, GL_COMPILE); {
-        //peg();
-    //} glEndList();
+        bfv = inner_peg_face_vertices[2 * i];
+        bv = inner_peg_base_vertices[i];
+        tfv = inner_peg_face_vertices[2 * i + 1];
+        tv = inner_peg_top_vertices[i];
 
-    
-    //index = glGenLists (2);
-    //glNewList(index, GL_COMPILE); {
-        //peg();
-    //} glEndList();
+        bfv[0] = bv[0] = tfv[0] = tv[0] = x; 
+        bfv[1] = bv[1] = tfv[1] = tv[1] = y; 
+        bfv[2] = bv[2] = -LEGO_HEIGHT/2;
+        tfv[2] = tv[2] = LEGO_HEIGHT/2 - WALL_WIDTH;
 
-    //glNewList(index + 1, GL_COMPILE); {
-        //lego_sides();
-        //lego_base();
-        //lego_inner_faces();
-    //} glEndList();
-    //initBlock();
-    //initPegs();
+        x = (INNER_PEG_RADIUS - WALL_WIDTH) * cos(2 * M_PI * i / NUM_PEG_VERTICES);
+        y = (INNER_PEG_RADIUS - WALL_WIDTH) * sin(2 * M_PI * i / NUM_PEG_VERTICES);
+
+        ibfv = inner_inner_peg_face_vertices[2 * i];
+        ibv = inner_inner_peg_base_vertices[i];
+        itfv = inner_inner_peg_face_vertices[2 * i + 1];
+        itv = inner_inner_peg_top_vertices[i];
+
+        ibfv[0] = ibv[0] = itfv[0] = itv[0] = x; 
+        ibfv[1] = ibv[1] = itfv[1] = itv[1] = y; 
+        ibfv[2] = ibv[2] = -LEGO_HEIGHT/2;
+        itfv[2] = itv[2] = LEGO_HEIGHT/2 - WALL_WIDTH;
+    }
+
+    dl = glGenLists(1);
+    glNewList(dl, GL_COMPILE); {
+        lego_sides();
+        lego_base();
+        lego_inner_faces();
+        lego_top();
+        lego_top_inner();
+        glPushMatrix();
+            glTranslatef(-PEG_CENTER_TO_CENTER_DISTANCE / 2, 0, 0);
+            inner_peg();
+            glPushMatrix();
+                glTranslatef(0, INNER_PEG_RADIUS + STRUT_LENGTH / 2, 0);
+                strut();
+                glTranslatef(0, -(INNER_PEG_RADIUS * 2 + STRUT_LENGTH), 0);
+                strut();
+            glPopMatrix();
+            glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+            inner_peg();
+            glPushMatrix();
+                glTranslatef(0, INNER_PEG_RADIUS + STRUT_LENGTH / 2, 0);
+                strut();
+                glTranslatef(0, -(INNER_PEG_RADIUS * 2 + STRUT_LENGTH), 0);
+                strut();
+            glPopMatrix();
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(-PEG_CENTER_TO_CENTER_DISTANCE, -PEG_CENTER_TO_CENTER_DISTANCE / 2, 0);
+            peg(); 
+            glPushMatrix();
+                glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+                peg();
+                glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+                peg();
+            glPopMatrix();
+            glPushMatrix();
+                glTranslatef(0, PEG_CENTER_TO_CENTER_DISTANCE, 0);
+                peg();
+                glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+                peg();
+                glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+                peg();
+            glPopMatrix();
+        glPopMatrix();
+    } glEndList();
 }
 
 void lego()
 {
-    GLubyte lists[2];
-    //glRotatef(
     initLego();
-    lego_sides();
-    lego_base();
-    lego_inner_faces();
-    lego_top();
-    peg(); 
-    glPushMatrix();
-        glTranslatef(0, -3 * PEG_RADIUS, 0);
-        peg();
-    glPopMatrix();
-    glPushMatrix();
-        glTranslatef(3 * PEG_RADIUS, 0, 0);
-        peg();
-        glTranslatef(0, -3 * PEG_RADIUS, 0);
-        peg();
-    glPopMatrix();
-    glPushMatrix();
-        glTranslatef(-3 * PEG_RADIUS, 0, 0);
-        peg();
-        glTranslatef(0, -3 * PEG_RADIUS, 0);
-        peg();
-    glPopMatrix();
-
-
-
-
-    //lists[0] = 0;//blockDL;
-    //lists[1] = 1;//pegDL;
-    //glListBase(index);
-    //glCallLists(2, GL_UNSIGNED_BYTE, lists);
-    //
-    //glCallList(pegDL);
+    glCallList(dl);
 }

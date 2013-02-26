@@ -20,3 +20,6 @@
 *~
 *.swp
 *.swo
+ #images
+*.png
+*.ppm

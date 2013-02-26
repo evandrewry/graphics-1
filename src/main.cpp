@@ -30,8 +30,8 @@ bool isTeapot2_selected = false;
 
 // Lights & Materials
 GLfloat ambient[] = {0.2, 0.2, 0.2, 1.0};
-GLfloat position[] = {20, 20, 20, 10};
-GLfloat position2[] = {-20, -20, -20, -10};
+GLfloat position[] = {200, 200, 200, 100};
+GLfloat position2[] = {-200, -200, -200, -100};
 GLfloat mat_diffuse[] = {0.6, 0.6, 0.6, 1.0};
 GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
 GLfloat mat_shininess[] = {20.0};
@@ -44,7 +44,7 @@ void initLights(void)
 {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHT1);
+    //glEnable(GL_LIGHT1);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
 
@@ -53,16 +53,46 @@ void initLights(void)
     glLightfv(GL_LIGHT0, GL_DIFFUSE, mat_diffuse);
     //glLightfv(GL_LIGHT0, GL_SPECULAR, mat_specular);
 
-    glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
-    glLightfv(GL_LIGHT1, GL_POSITION, position2);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, mat_diffuse);
+    //glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+    //glLightfv(GL_LIGHT1, GL_POSITION, position2);
+    //glLightfv(GL_LIGHT1, GL_DIFFUSE, mat_diffuse);
     //glLightfv(GL_LIGHT1, GL_SPECULAR, mat_specular);
 
     glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+    //glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 }
 
+float ORG[3] = {0,0,0};
+
+float XP[3] = {1,0,0}, XN[3] = {-1,0,0},
+YP[3] = {0,1,0}, YN[3] = {0,-1,0},
+ZP[3] = {0,0,1}, ZN[3] = {0,0,-1};
+static void axes(void)
+{
+    glPushMatrix ();
+
+    //glTranslatef (-2.4, -1.5, -5);
+    glRotatef (0 , 1,0,0);
+    glRotatef (0, 0,1,0);
+    //glScalef (0.25, 0.25, 0.25);
+
+    glLineWidth (2.0);
+
+    glBegin (GL_LINES);
+    glColor3f (1,0,0); // X axis is red.
+    glVertex3fv (ORG);
+    glVertex3fv (XP ); 
+    glColor3f (0,1,0); // Y axis is green.
+    glVertex3fv (ORG);
+    glVertex3fv (YP );
+    glColor3f (0,0,1); // z axis is blue.
+    glVertex3fv (ORG);
+    glVertex3fv (ZP ); 
+    glEnd();
+
+    glPopMatrix ();
+}
 
 void init()
 {
@@ -70,8 +100,8 @@ void init()
     tbAnimate(GL_TRUE);
 
     // Place Camera
-    camRotX = 350.0f;
-    camRotY = 680.0f;
+    camRotX = 10.0f;
+    camRotY = 10.0f;
     camPosX = 0.0f;
     camPosY = 0.0f;
     camPosZ = -80.0f;
@@ -86,6 +116,7 @@ void init()
     {
         GLfloat color[] = {0, 1, 0, 1};
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+
         lego();
     }
     glEndList();
@@ -99,43 +130,6 @@ void setCamera( void )
     glTranslatef(0, 0, camPosZ);
     glRotatef(camRotX, 1, 0, 0);
     glRotatef(camRotY, 0, 1, 0);
-}
-
-void drawSelectableTeapots( void )
-{
-    float currentColor[4];
-    glGetFloatv(GL_CURRENT_COLOR, currentColor);
-
-    GLfloat selectedColor[] = {0, 1, 0, 1};
-    GLfloat unselectedColor[] = {1, 0, 0, 1};
-
-    // Initialize the name stack
-    glInitNames();
-    glPushName(0);
-
-    // Draw two teapots next to each other in z axis
-    glPushMatrix();
-    {
-
-        if( isTeapot1_selected )
-            glMaterialfv(GL_FRONT, GL_DIFFUSE, selectedColor);
-        else
-            glMaterialfv(GL_FRONT, GL_DIFFUSE, unselectedColor);
-        glLoadName(0);
-        glutSolidTeapot(2.5);
-
-        if( isTeapot2_selected )
-            glMaterialfv(GL_FRONT, GL_DIFFUSE, selectedColor);
-        else
-            glMaterialfv(GL_FRONT, GL_DIFFUSE, unselectedColor);
-        glLoadName(1);
-        glTranslatef(0,0,5);
-        glutSolidTeapot(1.5);
-    }
-    glPopMatrix();
-
-    glColor4fv(currentColor);
-
 }
 
 void display( void )
@@ -220,105 +214,9 @@ void keyboard( unsigned char key, int x, int y )
     glutPostRedisplay();
 }
 
-void processSelection(int xPos, int yPos)
-{
-    GLfloat fAspect;
-
-    // Space for selection buffer
-    static GLuint selectBuff[BUFFER_LENGTH];
-
-    // Hit counter and viewport storage
-    GLint hits, viewport[4];
-
-    // Setup selection buffer
-    glSelectBuffer(BUFFER_LENGTH, selectBuff);
-
-    // Get the viewport
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    // Switch to projection and save the matrix
-    glMatrixMode(GL_PROJECTION);
-
-    glPushMatrix();
-    {
-        // Change render mode
-        glRenderMode(GL_SELECT);
-
-        // Establish new clipping volume to be unit cube around
-        // mouse cursor point (xPos, yPos) and extending two pixels
-        // in the vertical and horizontal direction
-        glLoadIdentity();
-        gluPickMatrix(xPos, viewport[3] - yPos + viewport[1], 0.1,0.1, viewport);
-
-        // Apply perspective matrix 
-        fAspect = (float)viewport[2] / (float)viewport[3];
-        gluPerspective(45.0f, fAspect, 1.0, 425.0);
-
-
-        // Render only those needed for selection
-        glPushMatrix();    
-        {
-            setCamera();
-            tbMatrixForSelection();
-            glCallList(legoDL); 
-
-        }
-        glPopMatrix();
-
-
-        // Collect the hits
-        hits = glRenderMode(GL_RENDER);
-
-        isTeapot1_selected = false;
-        isTeapot2_selected = false;
-
-        // If hit(s) occurred, display the info.
-        if(hits != 0)
-        {
-
-            // Save current picked object.
-            // Take only the nearest selection
-            pickedObj = selectBuff[3];
-
-            sprintf (titleString, "You clicked on %d", pickedObj);
-            glutSetWindowTitle(titleString);
-
-            if (pickedObj == 0) {
-                isTeapot1_selected = true;
-            }
-
-            if (pickedObj == 1) {
-                isTeapot2_selected = true;
-            }
-
-        }
-        else
-            glutSetWindowTitle("Nothing was clicked on!");
-
-
-        // Restore the projection matrix
-        glMatrixMode(GL_PROJECTION);
-    }
-    glPopMatrix();
-
-    // Go back to modelview for normal rendering
-    glMatrixMode(GL_MODELVIEW);
-
-    glutPostRedisplay();
-}
-
 void mouse( int button, int state, int x, int y)
 {
     tbMouse(button, state, x, y);
-
-    if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-        processSelection(x, y);
-
-    if(button == GLUT_LEFT_BUTTON && state == GLUT_UP)
-    {
-        pickedObj = -1;
-        glutPostRedisplay();
-    }
 }
 
 void motion(int x, int y)
