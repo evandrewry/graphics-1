@@ -4,27 +4,23 @@
 #   include <GL/glut.h>
 #endif
 #include <math.h>
+#include "lego.h"
+
 
 using namespace std;
 
-#define LEGO_HEIGHT (LEGO_WIDTH * 0.6)
-#define LEGO_WIDTH 18.0
-#define WALL_WIDTH (LEGO_WIDTH / 18.0)
-#define LEGO_LENGTH (LEGO_WIDTH * 1.5)
-#define PEG_HEIGHT (LEGO_HEIGHT / 6.0)
-#define PEG_RADIUS (LEGO_WIDTH / 6.0)
-#define INNER_PEG_RADIUS (LEGO_WIDTH * 0.2)
-#define PEG_EDGE_TO_EDGE_DISTANCE \
-    ((LEGO_LENGTH - (6.0 * PEG_RADIUS)) / 3.0)
-#define PEG_CENTER_TO_CENTER_DISTANCE \
-    (2 * PEG_RADIUS + PEG_EDGE_TO_EDGE_DISTANCE)
-#define STRUT_WIDTH WALL_WIDTH
-#define STRUT_LENGTH  \
-    ((LEGO_WIDTH - 2 * WALL_WIDTH - 2 * INNER_PEG_RADIUS) / 2)
-#define NUM_PEG_VERTICES 100
-#define STRUT_HEIGHT (LEGO_HEIGHT * 0.75)
 
-static GLuint dl;
+static GLuint dl, multidl;
+static bool initialized = false;
+
+//LEGO COLORS
+GLfloat green[] = {40./255, 127./255, 70./255, 1};
+GLfloat yellow[] = {1, 1, 0, 1};
+GLfloat white[] = {1, 1, 1, 1};
+GLfloat cyan[] = {0, 1, 1, 1};
+GLfloat red[] = {1, 0, 0, 1};
+GLfloat blue[] = {0, 0, 1, 1};
+GLfloat black[] = {0.1, 0.1, 0.1, 1};
 
 //LEGO VERTICES
 
@@ -312,16 +308,12 @@ static void lego_top()
 {
     glBegin(GL_QUADS); {
         glNormal3f(0.,0.,1.0);
-        //glNormal3fv(vertex_b);
         glVertex3fv(vertex_b);
         glNormal3f(0.,0.,1.0);
-        //glNormal3fv(vertex_d);
         glVertex3fv(vertex_d);
         glNormal3f(0.,0.,1.0);
-        //glNormal3fv(vertex_f);
         glVertex3fv(vertex_f);
         glNormal3f(0.,0.,1.0);
-        //glNormal3fv(vertex_h);
         glVertex3fv(vertex_h);
     } glEnd();
 }
@@ -361,25 +353,35 @@ static GLfloat *negatev(GLfloat *vector, int len)
     return out;
 }
 static void lego_inner_faces()
-{
-    int i;
-    glBegin(GL_QUAD_STRIP); {
-        for (i = 0; i < 8; i++) {
-            glNormal3fv(&lego_inner_face_vertices[i][0]);
+{   int i;
+    GLfloat normal[3] = {0, 0, 0};
+
+    glBegin(GL_QUADS); {
+        for (i = 0; i < 8; i += 2) {
+            switch (i) {
+                case 0: normal[1] = 1; break;
+                case 2: normal[0] = -1; break;
+                case 4: normal[1] = -1; break;
+                case 6: normal[0] = 1; break;
+                default: exit(1);
+            }
+            glNormal3fv(&normal[0]);
             glVertex3fv(&lego_inner_face_vertices[i][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&lego_inner_face_vertices[(i + 1) % 8][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&lego_inner_face_vertices[(i + 3) % 8][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&lego_inner_face_vertices[(i + 2) % 8][0]);
         }
-        glNormal3fv(negatev(&lego_inner_face_vertices[0][0], 3));
-        glVertex3fv(&lego_inner_face_vertices[0][0]);
-        glNormal3fv(negatev(&lego_inner_face_vertices[1][0], 3));
-        glVertex3fv(&lego_inner_face_vertices[1][0]);
     } glEnd();
-    //QUAD_CYCLE(lego_inner_face_vertices, 8);
 }
 
 static void strut()
 {
     int i;
     glBegin(GL_QUADS); {
+        //front face
         glNormal3f(-1,0,0);
         glVertex3f(-STRUT_WIDTH / 2, -STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH);
         glNormal3f(-1,0,0);
@@ -390,6 +392,7 @@ static void strut()
         glVertex3f(-STRUT_WIDTH / 2, -STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
 
         
+        //skinny edge face
         glNormal3f(0,0,-1);
         glVertex3f(-STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
         glNormal3f(0,0,-1);
@@ -399,6 +402,7 @@ static void strut()
         glNormal3f(0,0,-1);
         glVertex3f(STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
         
+        //back face
         glNormal3f(1,0,0);
         glVertex3f(STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH - STRUT_HEIGHT);
         glNormal3f(1,0,0);
@@ -407,7 +411,6 @@ static void strut()
         glVertex3f(STRUT_WIDTH / 2, -STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH);
         glNormal3f(1,0,0);
         glVertex3f(STRUT_WIDTH / 2, STRUT_LENGTH / 2, LEGO_HEIGHT / 2 - WALL_WIDTH);
-
     } glEnd();
 }
 
@@ -588,6 +591,7 @@ static void peg()
 /*}*/
 
 static void initLego() {
+    if (initialized) return;
     int i;
     GLfloat x, y, *bfv, *bv, *tfv, *tv, *ibv, *itv, *itfv, *ibfv;
     for (i = 0; i < NUM_PEG_VERTICES; i++) {
@@ -615,7 +619,7 @@ static void initLego() {
 
         bfv[0] = bv[0] = tfv[0] = tv[0] = x; 
         bfv[1] = bv[1] = tfv[1] = tv[1] = y; 
-        bfv[2] = bv[2] = -LEGO_HEIGHT/2;
+        bfv[2] = bv[2] = -LEGO_HEIGHT/2 * 0.95;
         tfv[2] = tv[2] = LEGO_HEIGHT/2 - WALL_WIDTH;
 
         x = (INNER_PEG_RADIUS - WALL_WIDTH) * cos(2 * M_PI * i / NUM_PEG_VERTICES);
@@ -628,58 +632,146 @@ static void initLego() {
 
         ibfv[0] = ibv[0] = itfv[0] = itv[0] = x; 
         ibfv[1] = ibv[1] = itfv[1] = itv[1] = y; 
-        ibfv[2] = ibv[2] = -LEGO_HEIGHT/2;
+        ibfv[2] = ibv[2] = -LEGO_HEIGHT/2 * 0.95;
         itfv[2] = itv[2] = LEGO_HEIGHT/2 - WALL_WIDTH;
     }
+    initialized = true;
 
+
+}
+
+static void initdls() {
     dl = glGenLists(1);
     glNewList(dl, GL_COMPILE); {
-        lego_sides();
-        lego_base();
-        lego_inner_faces();
-        lego_top();
-        lego_top_inner();
-        glPushMatrix();
-            glTranslatef(-PEG_CENTER_TO_CENTER_DISTANCE / 2, 0, 0);
-            inner_peg();
-            glPushMatrix();
-                glTranslatef(0, INNER_PEG_RADIUS + STRUT_LENGTH / 2, 0);
-                strut();
-                glTranslatef(0, -(INNER_PEG_RADIUS * 2 + STRUT_LENGTH), 0);
-                strut();
-            glPopMatrix();
-            glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
-            inner_peg();
-            glPushMatrix();
-                glTranslatef(0, INNER_PEG_RADIUS + STRUT_LENGTH / 2, 0);
-                strut();
-                glTranslatef(0, -(INNER_PEG_RADIUS * 2 + STRUT_LENGTH), 0);
-                strut();
-            glPopMatrix();
-        glPopMatrix();
-        glPushMatrix();
-            glTranslatef(-PEG_CENTER_TO_CENTER_DISTANCE, -PEG_CENTER_TO_CENTER_DISTANCE / 2, 0);
-            peg(); 
-            glPushMatrix();
-                glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
-                peg();
-                glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
-                peg();
-            glPopMatrix();
-            glPushMatrix();
-                glTranslatef(0, PEG_CENTER_TO_CENTER_DISTANCE, 0);
-                peg();
-                glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
-                peg();
-                glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
-                peg();
-            glPopMatrix();
-        glPopMatrix();
+        lego();
+    } glEndList();
+
+    multidl = glGenLists(1);
+    glNewList(multidl, GL_COMPILE);
+    {
+        multilego();
     } glEndList();
 }
 
 void lego()
 {
     initLego();
-    glCallList(dl);
+    lego_sides();
+    lego_base();
+    lego_inner_faces();
+    lego_top();
+    lego_top_inner();
+    glPushMatrix();
+        glTranslatef(-PEG_CENTER_TO_CENTER_DISTANCE / 2, 0, 0);
+        inner_peg();
+        glPushMatrix();
+            glTranslatef(0, INNER_PEG_RADIUS + STRUT_LENGTH / 2, 0);
+            strut();
+            glTranslatef(0, -(INNER_PEG_RADIUS * 2 + STRUT_LENGTH), 0);
+            strut();
+        glPopMatrix();
+        glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+        inner_peg();
+        glPushMatrix();
+            glTranslatef(0, INNER_PEG_RADIUS + STRUT_LENGTH / 2, 0);
+            strut();
+            glTranslatef(0, -(INNER_PEG_RADIUS * 2 + STRUT_LENGTH), 0);
+            strut();
+        glPopMatrix();
+    glPopMatrix();
+    glPushMatrix();
+        glTranslatef(-PEG_CENTER_TO_CENTER_DISTANCE, -PEG_CENTER_TO_CENTER_DISTANCE / 2, 0);
+        peg(); 
+        glPushMatrix();
+            glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+            peg();
+            glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+            peg();
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(0, PEG_CENTER_TO_CENTER_DISTANCE, 0);
+            peg();
+            glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+            peg();
+            glTranslatef(PEG_CENTER_TO_CENTER_DISTANCE, 0, 0);
+            peg();
+        glPopMatrix();
+    glPopMatrix();
 }
+
+void multilego()
+{
+    initLego();
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
+
+    lego();
+    glPushMatrix();
+        glRotatef(90., 0, 0, 1);
+        glTranslatef(LEGO_WIDTH / 4, LEGO_WIDTH / 4, LEGO_HEIGHT);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
+        lego();
+        glTranslatef(0, -LEGO_WIDTH, 0);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
+        lego();
+        glTranslatef(0, 0, -2 *LEGO_HEIGHT);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, yellow);
+        lego();
+        glTranslatef(- 2. / 3. * LEGO_LENGTH, - LEGO_WIDTH / 2, LEGO_HEIGHT);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, white);
+        lego();
+        glRotatef(90., 0, 0, 1);
+        glTranslatef(LEGO_WIDTH / 4, LEGO_WIDTH / 4, 0);
+        glTranslatef(-LEGO_LENGTH / 3, -LEGO_WIDTH * 1.5, 0);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+        lego();
+        glTranslatef(-LEGO_WIDTH / 2, -LEGO_WIDTH / 2, -LEGO_HEIGHT);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
+        lego();
+        glTranslatef(LEGO_LENGTH, -LEGO_WIDTH, 0);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
+        lego();
+    glPopMatrix();
+    glPushMatrix();
+        glTranslatef(0,LEGO_LENGTH,LEGO_HEIGHT);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, yellow);
+        lego();
+        glPushMatrix();
+            glRotatef(90., 0, 0, 1);
+            glTranslatef(LEGO_WIDTH / 4, LEGO_WIDTH / 4, LEGO_HEIGHT);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, white);
+            lego();
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(0, LEGO_LENGTH, LEGO_HEIGHT);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
+            lego();
+            glTranslatef(0, 0, LEGO_HEIGHT);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
+            lego();
+        glPopMatrix();
+    glPopMatrix();
+    glPushMatrix();
+        glTranslatef(0,LEGO_WIDTH,0);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
+        lego();
+        glPushMatrix();
+            glRotatef(90., 0, 0, 1);
+            glTranslatef(LEGO_WIDTH / 4, LEGO_WIDTH / 4, 0);
+            glTranslatef(LEGO_WIDTH * 2, 0, 0);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, white);
+            lego();
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(0, LEGO_LENGTH, LEGO_HEIGHT);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+            lego();
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(0,LEGO_WIDTH,0);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, yellow);
+            lego();
+        glPopMatrix();
+    glPopMatrix();
+}
+

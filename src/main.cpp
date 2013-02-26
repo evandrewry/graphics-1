@@ -60,38 +60,7 @@ void initLights(void)
 
     glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
     //glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-}
-
-float ORG[3] = {0,0,0};
-
-float XP[3] = {1,0,0}, XN[3] = {-1,0,0},
-YP[3] = {0,1,0}, YN[3] = {0,-1,0},
-ZP[3] = {0,0,1}, ZN[3] = {0,0,-1};
-static void axes(void)
-{
-    glPushMatrix ();
-
-    //glTranslatef (-2.4, -1.5, -5);
-    glRotatef (0 , 1,0,0);
-    glRotatef (0, 0,1,0);
-    //glScalef (0.25, 0.25, 0.25);
-
-    glLineWidth (2.0);
-
-    glBegin (GL_LINES);
-    glColor3f (1,0,0); // X axis is red.
-    glVertex3fv (ORG);
-    glVertex3fv (XP ); 
-    glColor3f (0,1,0); // Y axis is green.
-    glVertex3fv (ORG);
-    glVertex3fv (YP );
-    glColor3f (0,0,1); // z axis is blue.
-    glVertex3fv (ORG);
-    glVertex3fv (ZP ); 
-    glEnd();
-
-    glPopMatrix ();
+    //glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 }
 
 void init()
@@ -100,11 +69,11 @@ void init()
     tbAnimate(GL_TRUE);
 
     // Place Camera
-    camRotX = 10.0f;
-    camRotY = 10.0f;
+    camRotX = 40.0f;
+    camRotY = 40.0f;
     camPosX = 0.0f;
     camPosY = 0.0f;
-    camPosZ = -80.0f;
+    camPosZ = -100.0f;
 
     glEnable( GL_DEPTH_TEST );
     glShadeModel(GL_SMOOTH);
@@ -117,11 +86,10 @@ void init()
         GLfloat color[] = {0, 1, 0, 1};
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
 
-        lego();
+        multilego();
     }
     glEndList();
 
-    glShadeModel(GL_FLAT);
     glClearColor(0.0, 0.0, 0.0, 0.0);
 }
 
@@ -163,7 +131,7 @@ void reshape( int w, int h )
     glLoadIdentity();
 
     // Set the clipping volume
-    gluPerspective(30.0f, (GLfloat)w / (GLfloat)h, 1.0f, 100.0f);
+    gluPerspective(60.0f, (GLfloat)w / (GLfloat)h, 1.0f, 500.0f);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -187,11 +155,13 @@ void keyboard( unsigned char key, int x, int y )
             break;
         case 'z':
         case 100: //left arrow key
-            glRotatef(1.,0.0,0.0,1.0);
+            camPosZ++;
+            glutPostRedisplay();
             break;
         case 'Z':
         case 102:
-            glRotatef(-1.,0.0,0.0,1.0);
+            camPosZ--;
+            glutPostRedisplay();
             break;
         case 'y':
         case '/':
