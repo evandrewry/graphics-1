@@ -22,6 +22,7 @@ GLdouble projection[16];
 
 GLuint pickedObj = -1;
 GLuint legoDL;
+static int howMany = 100;
 
 char titleString[150];
 
@@ -69,11 +70,11 @@ void init()
     tbAnimate(GL_TRUE);
 
     // Place Camera
-    camRotX = 40.0f;
-    camRotY = 40.0f;
+    camRotX = 120.0f;
+    camRotY = 180.0f;
     camPosX = 0.0f;
     camPosY = 0.0f;
-    camPosZ = -100.0f;
+    camPosZ = -150.0f;
 
     glEnable( GL_DEPTH_TEST );
     glShadeModel(GL_SMOOTH);
@@ -86,7 +87,7 @@ void init()
         GLfloat color[] = {0, 1, 0, 1};
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
 
-        multilego();
+        multilego(howMany);
     }
     glEndList();
 
@@ -108,7 +109,8 @@ void display( void )
         setCamera();
         tbMatrix();
 
-        glCallList(legoDL);
+        multilego(howMany);
+        //glCallList(legoDL);
 
         // Retrieve current matrice before they popped.
         glGetDoublev( GL_MODELVIEW_MATRIX, modelview );        // Retrieve The Modelview Matrix
@@ -145,13 +147,25 @@ void keyboard( unsigned char key, int x, int y )
         case 27: // Escape key
             exit(0);
             break;
+        case 'q':
+            howMany++;
+            printf("draw more\n");
+            glutPostRedisplay();
+            break;
+        case 'Q':
+            howMany--;
+            printf("draw less\n");
+            glutPostRedisplay();
+            break;
         case 'x':
         case 101: //up arrow key
-            glRotatef(1.,1.0,0.0,0.0);
+            camRotX++;
+            glutPostRedisplay();
             break;
         case 'X':
         case 103: //down arrow key
-            glRotatef(-1.,1.0,0.0,0.0);
+            camRotX--;
+            glutPostRedisplay();
             break;
         case 'z':
         case 100: //left arrow key
@@ -165,11 +179,13 @@ void keyboard( unsigned char key, int x, int y )
             break;
         case 'y':
         case '/':
-            glRotatef(1.,0.0,1.0,1.0);
+            camRotY++;
+            glutPostRedisplay();
             break;
         case 'Y':
         case '.':
-            glRotatef(-1.,0.0,1.0,1.0);
+            camRotY--;
+            glutPostRedisplay();
             break;
         case 'i':
         case 'I':

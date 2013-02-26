@@ -22,4 +22,4 @@
 #define STRUT_HEIGHT (LEGO_HEIGHT * 0.75)
 
 void lego();
-void multilego();
+void multilego(int);
