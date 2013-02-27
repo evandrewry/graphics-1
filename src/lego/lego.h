@@ -6,6 +6,7 @@
 
 #define LEGO_HEIGHT (LEGO_WIDTH * 0.6)
 #define LEGO_WIDTH 18.0
+#define LEGO_UNIT (LEGO_WIDTH / 2.0)
 #define WALL_WIDTH (LEGO_WIDTH / 18.0)
 #define LEGO_LENGTH (LEGO_WIDTH * 1.5)
 #define PEG_HEIGHT (LEGO_HEIGHT / 6.0)
@@ -14,10 +15,10 @@
 #define PEG_EDGE_TO_EDGE_DISTANCE \
     ((LEGO_LENGTH - (6.0 * PEG_RADIUS)) / 3.0)
 #define PEG_CENTER_TO_CENTER_DISTANCE \
-    (2 * PEG_RADIUS + PEG_EDGE_TO_EDGE_DISTANCE)
+    (2.0 * PEG_RADIUS + PEG_EDGE_TO_EDGE_DISTANCE)
 #define STRUT_WIDTH WALL_WIDTH
 #define STRUT_LENGTH  \
-    ((LEGO_WIDTH - 2 * WALL_WIDTH - 2 * INNER_PEG_RADIUS) / 2)
+    ((LEGO_WIDTH - 2.0 * WALL_WIDTH - 2.0 * INNER_PEG_RADIUS) / 2.0)
 #define NUM_PEG_VERTICES 100
 #define STRUT_HEIGHT (LEGO_HEIGHT * 0.75)
 
@@ -30,7 +31,9 @@ extern const GLfloat red[4];
 extern const GLfloat blue[4];
 extern const GLfloat black[4];
 
+//DRAW 3X2 LEGO
 void lego();
-void legofan(const GLfloat *[4]);
-void legotess(int, int, const GLfloat *[4]);
-void multilego(int);
+
+//DRAW 1X1 LEGO
+void mini_lego();
+

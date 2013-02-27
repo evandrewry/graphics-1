@@ -10,36 +10,40 @@
 #include "GLScreenCapturer.h"
 #include "trackball.h"
 #include "lego/lego.h"
-
-using namespace std;
+#include "lego/models/fan.h"
+#include "lego/models/pile.h"
+#include "lego/models/horse.h"
 
 #define BUFFER_LENGTH 64
 #define GRID_WIDTH 1000
-#define GRID_GRANULARITY 10
+#define GRID_GRANULARITY 40
 #define CAMERA_MOVEMENT_GRANULARITY 10
 
-GLfloat camRotX, camRotY, camRotZ, camPosX, camPosY, camPosZ;
-GLint viewport[4];
-GLdouble modelview[16];
-GLdouble projection[16];
+static GLfloat camRotX, camRotY, camRotZ, camPosX, camPosY, camPosZ;
+static GLint viewport[4];
+static GLdouble modelview[16];
+static GLdouble projection[16];
+static GLuint pickedObj = -1;
+static bool grid_on = false;
+static bool pile_on = true;
+static bool tessellation_on = true;
+static bool horse_on = true;
+static bool lego_mode = false;
 
-GLuint pickedObj = -1;
-GLuint legoDL;
+static GLuint legoDL;
 static int howMany = 5;
+static const GLfloat *tesselation_colors[4];
 
-char titleString[150];
-
-bool isTeapot1_selected = false;
-bool isTeapot2_selected = false;
+static char titleString[150];
 
 // Lights & Materials
-GLfloat ambient[] = {0.2, 0.2, 0.2, 1.0};
-GLfloat position[] = {200, 200, 200, 100};
-GLfloat position2[] = {-200, -200, -200, -100};
-GLfloat mat_diffuse[] = {0.6, 0.6, 0.6, 1.0};
-GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
-GLfloat mat_shininess[] = {20.0};
-GLfloat global_ambient[] = { 0.4, 0.4, 0.4, 1 };
+const static GLfloat ambient[] = {0.2, 0.2, 0.2, 1.0};
+const static GLfloat position[] = {200, 200, 200, 100};
+const static GLfloat position2[] = {-200, -200, -200, -100};
+const static GLfloat mat_diffuse[] = {0.6, 0.6, 0.6, 1.0};
+const static GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
+const static GLfloat mat_shininess[] = {20.0};
+const static GLfloat global_ambient[] = { 0.4, 0.4, 0.4, 1 };
 
 
 static GLScreenCapturer screenshot("screenshot-%d.ppm");
@@ -48,7 +52,6 @@ void initLights(void)
 {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    //glEnable(GL_LIGHT1);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
 
@@ -57,17 +60,12 @@ void initLights(void)
     glLightfv(GL_LIGHT0, GL_DIFFUSE, mat_diffuse);
     //glLightfv(GL_LIGHT0, GL_SPECULAR, mat_specular);
 
-    //glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
-    //glLightfv(GL_LIGHT1, GL_POSITION, position2);
-    //glLightfv(GL_LIGHT1, GL_DIFFUSE, mat_diffuse);
-    //glLightfv(GL_LIGHT1, GL_SPECULAR, mat_specular);
-
     glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
     //glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     //glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 }
 
-void init()
+static void init()
 {
     tbInit(GLUT_RIGHT_BUTTON);
     tbAnimate(GL_TRUE);
@@ -78,7 +76,7 @@ void init()
     camRotZ = 0.f;
     camPosX = 0.0f;
     camPosY = 0.0f;
-    camPosZ = -150.0f;
+    camPosZ = -200.0f;
 
     glEnable( GL_DEPTH_TEST );
     glShadeModel(GL_SMOOTH);
@@ -91,14 +89,14 @@ void init()
         GLfloat color[] = {0, 1, 0, 1};
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
 
-        multilego(howMany);
+        lego_pile(howMany);
     }
     glEndList();
 
     glClearColor(0.0, 0.0, 0.0, 0.0);
 }
 
-void setCamera( void )
+static void setCamera( void )
 {
     glTranslatef(0, 0, camPosZ);
     glRotatef(camRotX, 1, 0, 0);
@@ -106,7 +104,8 @@ void setCamera( void )
     glRotatef(camRotZ, 0, 0, 1);
 }
 
-void grid()
+
+static void grid()
 {
     unsigned int x, y;
     glPushMatrix(); {
@@ -131,6 +130,7 @@ void grid()
         } glEnd();
     } glPopMatrix();
 }
+
 void display( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -138,23 +138,43 @@ void display( void )
     {
         setCamera();
         tbMatrix();
+        
+        //in lego mode we display only a single lego for viewing
+        if(lego_mode) { 
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, yellow); 
+            lego();
+        } else {
 
-        const GLfloat *colors[4];
-        colors[0] = &blue[0]; colors[1] = &yellow[0];
-        colors[2] = &white[0]; colors[3] = &green[0];
-        legotess(2, 2, colors);
-        glPushMatrix();
-        glTranslatef(0, 0, -LEGO_HEIGHT);
-        colors[0] = &red[0]; colors[1] = &blue[0];
-        colors[2] = &black[0]; colors[3] = &green[0];
-        legotess(4,4,colors);
-        glPopMatrix();
-        glTranslatef(0, 0, LEGO_HEIGHT * 2.5);
-        multilego(howMany);
-        //glCallList(legoDL);
+            //display checkered floor
+            if (grid_on) grid();
 
+            //display tessellation of lego pinwheel shapes
+            if (tessellation_on) {
+                tesselation_colors[0] = &blue[0]; tesselation_colors[1] = &yellow[0];
+                tesselation_colors[2] = &white[0]; tesselation_colors[3] = &green[0];
+                lego_fan_tessellation(2, 2, tesselation_colors);
+                glPushMatrix();
+                    glTranslatef(0, 0, -LEGO_HEIGHT);
+                    tesselation_colors[0] = &red[0]; tesselation_colors[1] = &blue[0];
+                    tesselation_colors[2] = &black[0]; tesselation_colors[3] = &green[0];
+                    lego_fan_tessellation(6,6,tesselation_colors);
+                glPopMatrix();
+            }
 
+            //display pile of legos
+            if (pile_on) {
+                glPushMatrix();
+                    glTranslatef(LEGO_WIDTH / 4, 0, LEGO_HEIGHT * 2.5);
+                    lego_pile(howMany);
+                glPopMatrix();
+            }
 
+            //display animal thing
+            if (horse_on) {
+                glTranslatef(-LEGO_UNIT * 8.5, -LEGO_UNIT * 14, LEGO_HEIGHT / 2);
+                horse();
+            }
+        }
         // Retrieve current matrice before they popped.
         glGetDoublev( GL_MODELVIEW_MATRIX, modelview );        // Retrieve The Modelview Matrix
         glGetDoublev( GL_PROJECTION_MATRIX, projection );    // Retrieve The Projection Matrix
@@ -165,6 +185,7 @@ void display( void )
     glFlush();
     // End Drawing calls
     glutSwapBuffers();
+
 }
 
 void reshape( int w, int h )
@@ -196,7 +217,7 @@ void keyboard( unsigned char key, int x, int y )
             glutPostRedisplay();
             break;
         case 'Q':
-            howMany-= CAMERA_MOVEMENT_GRANULARITY;
+            howMany--;
             printf("draw less\n");
             glutPostRedisplay();
             break;
@@ -240,6 +261,21 @@ void keyboard( unsigned char key, int x, int y )
         case 'I':
             glLoadIdentity();
             gluLookAt(0, 0, 3, 0, 0, 0, 0, 1, 0);
+            break;
+        case '4':
+            grid_on = !grid_on;
+            break;
+        case '2':
+            pile_on = !pile_on;
+            break;
+        case '1':
+            tessellation_on = !tessellation_on;
+            break;
+        case '3':
+            horse_on = !horse_on;
+            break;
+        case '5':
+            lego_mode = !lego_mode;
             break;
         case 'r':
             printf("save current screen\n");

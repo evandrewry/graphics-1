@@ -7,12 +7,6 @@
 #include <stdlib.h>
 #include "lego.h"
 
-
-
-using namespace std;
-
-
-static GLuint dl, multidl;
 static bool initialized = false;
 
 //LEGO COLORS
@@ -67,6 +61,49 @@ static GLfloat vertex_h[3] = {
     LEGO_WIDTH/2,
     LEGO_HEIGHT/2
 };
+static GLfloat mini_vertex_a[3] = {
+    -LEGO_UNIT/2,
+    -LEGO_UNIT/2,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_vertex_b[3] = {
+    -LEGO_UNIT/2,
+    -LEGO_UNIT/2,
+    LEGO_HEIGHT/2
+};
+static GLfloat mini_vertex_c[3] = {
+    LEGO_UNIT/2,
+    -LEGO_UNIT/2,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_vertex_d[3] = {
+    LEGO_UNIT/2,
+    -LEGO_UNIT/2,
+    LEGO_HEIGHT/2
+};
+static GLfloat mini_vertex_e[3] = {
+    LEGO_UNIT/2,
+    LEGO_UNIT/2,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_vertex_f[3] = {
+    LEGO_UNIT/2,
+    LEGO_UNIT/2,
+    LEGO_HEIGHT/2
+};
+static GLfloat mini_vertex_g[3] = {
+    -LEGO_UNIT/2,
+    LEGO_UNIT/2,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_vertex_h[3] = {
+    -LEGO_UNIT/2,
+    LEGO_UNIT/2,
+    LEGO_HEIGHT/2
+};
+
+
+//inner vertices
 static GLfloat inner_vertex_a[3] = {
     -(LEGO_LENGTH/2 - WALL_WIDTH),
     -(LEGO_WIDTH/2 - WALL_WIDTH),
@@ -187,6 +224,128 @@ static GLfloat inner_vertex_fd[3] = {
     LEGO_WIDTH/2 - WALL_WIDTH,
     LEGO_HEIGHT/2 - WALL_WIDTH
 };
+
+static GLfloat mini_inner_vertex_a[3] = {
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_ag[3] = {
+    -LEGO_UNIT/2,
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_ac[3] = {
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    -LEGO_UNIT/2,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_c[3] =  {
+    LEGO_UNIT/2 - WALL_WIDTH,
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_ca[3] = {
+    LEGO_UNIT/2 - WALL_WIDTH,
+    -LEGO_UNIT/2,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_ce[3] = {
+    LEGO_UNIT/2,
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_e[3] = {
+    LEGO_UNIT/2 - WALL_WIDTH,
+    LEGO_UNIT/2 - WALL_WIDTH,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_ec[3] = {
+    LEGO_UNIT/2,
+    LEGO_UNIT/2 - WALL_WIDTH,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_eg[3] = {
+    LEGO_UNIT/2 - WALL_WIDTH,
+    LEGO_UNIT/2,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_g[3] =  {
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    LEGO_UNIT/2 - WALL_WIDTH,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_ge[3] = {
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    LEGO_UNIT/2,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_ga[3] = {
+    -LEGO_UNIT/2,
+    LEGO_UNIT/2 - WALL_WIDTH,
+    -LEGO_HEIGHT/2
+};
+static GLfloat mini_inner_vertex_b[3] =  {
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_bd[3] = {
+   -(LEGO_UNIT/2 - WALL_WIDTH),
+   -LEGO_UNIT/2,
+   LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_bh[3] = {
+    -LEGO_UNIT/2,
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_h[3] =  {
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    LEGO_UNIT/2 - WALL_WIDTH,
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_hd[3] = {
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    -LEGO_UNIT/2,
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_hh[3] = {
+    -LEGO_UNIT/2,
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_d[3] =  {
+    LEGO_UNIT/2 - WALL_WIDTH,
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_db[3] = {
+    LEGO_UNIT/2 - WALL_WIDTH,
+    -LEGO_UNIT/2,
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_df[3] = {
+    LEGO_UNIT/2,
+    -(LEGO_UNIT/2 - WALL_WIDTH),
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_f[3] =  {
+    LEGO_UNIT/2 - WALL_WIDTH,
+    LEGO_UNIT/2 - WALL_WIDTH,
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_fh[3] = {
+    LEGO_UNIT/2 - WALL_WIDTH,
+    LEGO_UNIT/2,
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+static GLfloat mini_inner_vertex_fd[3] = {
+    LEGO_UNIT/2,
+    LEGO_UNIT/2 - WALL_WIDTH,
+    LEGO_HEIGHT/2 - WALL_WIDTH
+};
+
 static GLfloat *lego_side_vertices[8] = {
     &vertex_a[0], &vertex_b[0],
     &vertex_c[0], &vertex_d[0],
@@ -243,6 +402,63 @@ static GLfloat *lego_inner_face_vertices[8] = {
     &inner_vertex_g[0],
     &inner_vertex_h[0]
 };
+static GLfloat *mini_lego_side_vertices[8] = {
+    &mini_vertex_a[0], &mini_vertex_b[0],
+    &mini_vertex_c[0], &mini_vertex_d[0],
+    &mini_vertex_e[0], &mini_vertex_f[0],
+    &mini_vertex_g[0], &mini_vertex_h[0]
+};
+static GLfloat *mini_lego_base_corner_vertices[4][4] = {
+    {   &mini_inner_vertex_a[0],
+        &mini_inner_vertex_ac[0],
+        &mini_vertex_a[0],
+        &mini_inner_vertex_ag[0]
+    },{ &mini_inner_vertex_c[0],
+        &mini_inner_vertex_ce[0],
+        &mini_vertex_c[0],
+        &mini_inner_vertex_ca[0]
+    },{ &mini_inner_vertex_e[0],
+        &mini_inner_vertex_eg[0],
+        &mini_vertex_e[0],
+        &mini_inner_vertex_ec[0]
+    },{ &mini_inner_vertex_g[0],
+        &mini_inner_vertex_ga[0],
+        &mini_vertex_g[0],
+        &mini_inner_vertex_ge[0]
+    }
+};
+
+static GLfloat *mini_lego_base_edge_vertices[4][4] = {
+    {   &mini_inner_vertex_a[0],
+        &mini_inner_vertex_ac[0],
+        &mini_inner_vertex_ca[0],
+        &mini_inner_vertex_c[0]
+    },{ &mini_inner_vertex_c[0],
+        &mini_inner_vertex_ce[0],
+        &mini_inner_vertex_ec[0],
+        &mini_inner_vertex_e[0]
+    },{ &mini_inner_vertex_e[0],
+        &mini_inner_vertex_eg[0],
+        &mini_inner_vertex_ge[0],
+        &mini_inner_vertex_g[0]
+    },{ &mini_inner_vertex_g[0],
+        &mini_inner_vertex_ga[0],
+        &mini_inner_vertex_ag[0],
+        &mini_inner_vertex_a[0]
+    }
+};
+
+static GLfloat *mini_lego_inner_face_vertices[8] = {
+    &mini_inner_vertex_a[0],
+    &mini_inner_vertex_b[0],
+    &mini_inner_vertex_c[0],
+    &mini_inner_vertex_d[0],
+    &mini_inner_vertex_e[0],
+    &mini_inner_vertex_f[0],
+    &mini_inner_vertex_g[0],
+    &mini_inner_vertex_h[0]
+};
+
 
 static GLfloat peg_base_center[3] = {
     0,
@@ -280,6 +496,34 @@ static GLfloat inner_inner_peg_face_vertices[NUM_PEG_VERTICES * 2][3];
 static GLfloat inner_peg_base_face_vertices[NUM_PEG_VERTICES * 2][3];
 
 
+//draw outer faces of mini lego
+static void mini_lego_sides()
+{
+    int i;
+    GLfloat normal[3] = {0, 0, 0};
+
+    glBegin(GL_QUADS); {
+        for (i = 0; i < 8; i += 2) {
+            switch (i) {
+                case 0: normal[1] = -1; break;
+                case 2: normal[0] = 1; break;
+                case 4: normal[1] = 1; break;
+                case 6: normal[0] = -1; break;
+                default: exit(1);
+            }
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&mini_lego_side_vertices[i][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&mini_lego_side_vertices[(i + 1) % 8][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&mini_lego_side_vertices[(i + 3) % 8][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&mini_lego_side_vertices[(i + 2) % 8][0]);
+        }
+    } glEnd();
+}
+
+//draw outer faces of lego
 static void lego_sides()
 {
     int i;
@@ -306,6 +550,38 @@ static void lego_sides()
     } glEnd();
 }
 
+//draw top face of mini lego
+static void mini_lego_top()
+{
+    glBegin(GL_QUADS); {
+        glNormal3f(0.,0.,1.0);
+        glVertex3fv(mini_vertex_b);
+        glNormal3f(0.,0.,1.0);
+        glVertex3fv(mini_vertex_d);
+        glNormal3f(0.,0.,1.0);
+        glVertex3fv(mini_vertex_f);
+        glNormal3f(0.,0.,1.0);
+        glVertex3fv(mini_vertex_h);
+    } glEnd();
+}
+
+//draw inner top face of mini lego
+static void mini_lego_top_inner()
+{
+    glBegin(GL_QUADS); {
+        glNormal3f(0.,0.,-1.0);
+        glVertex3fv(mini_inner_vertex_b);
+        glNormal3f(0.,0.,-1.0);
+        glVertex3fv(mini_inner_vertex_d);
+        glNormal3f(0.,0.,-1.0);
+        glVertex3fv(mini_inner_vertex_f);
+        glNormal3f(0.,0.,-1.0);
+        glVertex3fv(mini_inner_vertex_h);
+    } glEnd();
+}
+
+
+//draw top face of lego
 static void lego_top()
 {
     glBegin(GL_QUADS); {
@@ -320,6 +596,7 @@ static void lego_top()
     } glEnd();
 }
 
+//draw inner top face of lego
 static void lego_top_inner()
 {
     glBegin(GL_QUADS); {
@@ -336,6 +613,7 @@ static void lego_top_inner()
 
 
 
+//subtracts vectors
 static GLfloat *subtractv(GLfloat *v1, GLfloat *v2, int len)
 {
     int i;
@@ -345,6 +623,8 @@ static GLfloat *subtractv(GLfloat *v1, GLfloat *v2, int len)
     }
     return out;
 }
+
+//negates vector
 static GLfloat *negatev(GLfloat *vector, int len)
 {
     int i;
@@ -354,12 +634,15 @@ static GLfloat *negatev(GLfloat *vector, int len)
     }
     return out;
 }
+
+//draw inner faces of lego
 static void lego_inner_faces()
 {   int i;
     GLfloat normal[3] = {0, 0, 0};
 
     glBegin(GL_QUADS); {
         for (i = 0; i < 8; i += 2) {
+            //calculate normal vector
             switch (i) {
                 case 0: normal[1] = 1; break;
                 case 2: normal[0] = -1; break;
@@ -379,6 +662,35 @@ static void lego_inner_faces()
     } glEnd();
 }
 
+
+//draw inner faces of mini lego
+static void mini_lego_inner_faces()
+{   
+    int i;
+    GLfloat normal[3] = {0, 0, 0};
+
+    glBegin(GL_QUADS); {
+        for (i = 0; i < 8; i += 2) {
+            switch (i) {
+                case 0: normal[1] = 1; break;
+                case 2: normal[0] = -1; break;
+                case 4: normal[1] = -1; break;
+                case 6: normal[0] = 1; break;
+                default: exit(1);
+            }
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&mini_lego_inner_face_vertices[i][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&mini_lego_inner_face_vertices[(i + 1) % 8][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&mini_lego_inner_face_vertices[(i + 3) % 8][0]);
+            glNormal3fv(&normal[0]);
+            glVertex3fv(&mini_lego_inner_face_vertices[(i + 2) % 8][0]);
+        }
+    } glEnd();
+}
+
+//draw strut thing connecting the inner peg to the inner faces
 static void strut()
 {
     int i;
@@ -416,6 +728,7 @@ static void strut()
     } glEnd();
 }
 
+//draws peg inside lego
 static void inner_peg()
 {
     //outer faces
@@ -468,13 +781,16 @@ static void inner_peg()
     } glEnd();
 }
 
+//Draws peg cylinder
 static void lego_peg_faces() {
     int i;
+    GLfloat *normal;
     glBegin(GL_QUAD_STRIP); {
         for (i = 0; i < NUM_PEG_VERTICES * 2; i += 2) {
-            glNormal3fv(subtractv(&peg_face_vertices[i][0], &peg_base_center[0], 3));
+            normal = subtractv(&peg_face_vertices[i][0], &peg_base_center[0], 3);
+            glNormal3fv(normal);
             glVertex3fv(&peg_face_vertices[i][0]);
-            glNormal3fv(subtractv(&peg_face_vertices[i + 1][0], &peg_top_center[0], 3));
+            glNormal3fv(normal);
             glVertex3fv(&peg_face_vertices[i + 1][0]);
         }
         glNormal3fv(subtractv(&peg_face_vertices[0][0], &peg_base_center[0], 3));
@@ -484,8 +800,23 @@ static void lego_peg_faces() {
     } glEnd();
     //QUAD_CYCLE(peg_face_vertices, NUM_PEG_VERTICES * 2);
 }
-    
 
+
+//draws the base faces of mini lego
+static void mini_lego_base_edges()
+{
+    int i, j;
+    glBegin(GL_QUADS);{
+        for (i = 0; i < 4; i++){
+            for (j = 0; j < 4; j++){
+                glNormal3f(0.,0.,-1.0);
+                glVertex3fv(&mini_lego_base_edge_vertices[i][j][0]);
+            }
+        }
+    } glEnd();
+}
+
+//draws base face of lego
 static void lego_base_edges()
 {
     int i, j;
@@ -498,12 +829,16 @@ static void lego_base_edges()
         }
     } glEnd();
 }
+
+//shear matrix for LEGO font
 static float font_shear[] = { 
     1,   0, 0, 0, 
     0.8, 1, 0, 0,
     0,   0, 1, 0,
     0,   0, 0, 1 
 };
+
+//draws top face of lego peg with LEGO text
 static void lego_peg_top() {
     int i;
     char *c;
@@ -532,7 +867,22 @@ static void lego_peg_top() {
     glPopMatrix();
 }
 
+//draws corners of base
+static void mini_lego_base_corners()
+{
+    int i, j;
+    for (i = 0; i < 4; i++) {
+        glBegin(GL_TRIANGLE_FAN); {
+            for (j = 0; j < 4; j++) {
+                glNormal3f(0.,0.,-1.0);
+                glVertex3fv(&mini_lego_base_corner_vertices[i][j][0]);
+            }
+        } glEnd();
+    }
+}
 
+
+//draws corners of base
 static void lego_base_corners()
 {
     int i, j;
@@ -546,56 +896,35 @@ static void lego_base_corners()
     }
 }
 
+//draws base face of mini lego
+static void mini_lego_base()
+{
+    mini_lego_base_corners();
+    mini_lego_base_edges();
+}
+//draws base face of lego
 static void lego_base()
 {
     lego_base_corners();
     lego_base_edges();
 }
 
+//draws lego peg with LEGO stroked on top
 static void peg()
 {
     lego_peg_faces();
     lego_peg_top();
 }
 
-//static void initPegs() {
-    //int i;
-    //GLfloat x, y, *bfv, *bv, *tfv, *tv;
-    //for (i = 0; i < NUM_PEG_VERTICES; i++) {
-        //x = peg_base_center[0] + PEG_RADIUS * cos(2 * M_PI * i / NUM_PEG_VERTICES);
-        //y = peg_base_center[1] + PEG_RADIUS * sin(2 * M_PI * i / NUM_PEG_VERTICES);
-
-        //bfv = peg_face_vertices[2 * i];
-        //bv = peg_base_vertices[i];
-        //tfv = peg_face_vertices[2 * i + 1];
-        //tv = peg_top_vertices[i];
-
-        //bfv[0] = bv[0] = tfv[0] = tv[0] = x; 
-        //bfv[1] = bv[1] = tfv[1] = bv[1] = y; 
-        //bfv[2] = bv[2] = LEGO_HEIGHT/2;
-        //tfv[2] = tv[2] = LEGO_HEIGHT/2 + PEG_HEIGHT;
-    //}
-    
-    
-    //pegDL = glGenLists (1);
-    //glNewList(pegDL, GL_COMPILE); {
-        //peg();
-    //} glEndList();
-//}
-
-//static void initBlock() {
-    //blockDL = glGenLists (1);
-    //glNewList(blockDL, GL_COMPILE); {
-        //lego_sides();
-        //lego_base();
-        //lego_inner_faces();
-    //} glEndList();
-/*}*/
 
 static void initLego() {
+    //lazy initialization
     if (initialized) return;
+
     int i;
     GLfloat x, y, *bfv, *bv, *tfv, *tv, *ibv, *itv, *itfv, *ibfv;
+
+    //peg vertices
     for (i = 0; i < NUM_PEG_VERTICES; i++) {
         x = peg_base_center[0] + PEG_RADIUS * cos(2 * M_PI * i / NUM_PEG_VERTICES);
         y = peg_base_center[1] + PEG_RADIUS * sin(2 * M_PI * i / NUM_PEG_VERTICES);
@@ -610,6 +939,8 @@ static void initLego() {
         bfv[2] = bv[2] = LEGO_HEIGHT/2;
         tfv[2] = tv[2] = LEGO_HEIGHT/2 + PEG_HEIGHT;
     }
+
+    //inner peg vertices
     for (i = 0; i < NUM_PEG_VERTICES; i++) {
         x = INNER_PEG_RADIUS * cos(2 * M_PI * i / NUM_PEG_VERTICES);
         y = INNER_PEG_RADIUS * sin(2 * M_PI * i / NUM_PEG_VERTICES);
@@ -638,23 +969,9 @@ static void initLego() {
         itfv[2] = itv[2] = LEGO_HEIGHT/2 - WALL_WIDTH;
     }
     initialized = true;
-
-
 }
 
-static void initdls() {
-    dl = glGenLists(1);
-    glNewList(dl, GL_COMPILE); {
-        lego();
-    } glEndList();
-
-    multidl = glGenLists(1);
-    glNewList(multidl, GL_COMPILE);
-    {
-        multilego(100);
-    } glEndList();
-}
-
+//draws lego
 void lego()
 {
     initLego();
@@ -701,141 +1018,14 @@ void lego()
     glPopMatrix();
 }
 
-void legofan(const GLfloat *colors[4])
+//draws mini lego
+void mini_lego()
 {
-    glPushMatrix();
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colors[0]);
-        glTranslatef(LEGO_LENGTH / 2, LEGO_WIDTH / 2, LEGO_HEIGHT / 2);
-        lego();
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colors[2]);
-        glTranslatef(-LEGO_LENGTH, -LEGO_WIDTH, 0);
-        lego();
-    glPopMatrix();
-    glPushMatrix();
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colors[1]);
-        glRotatef(90., 0, 0, 1);
-        glTranslatef(LEGO_LENGTH / 2, LEGO_WIDTH / 2, LEGO_HEIGHT / 2);
-        lego();
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colors[3]);
-        glTranslatef(-LEGO_LENGTH, -LEGO_WIDTH, 0);
-        lego();
-    glPopMatrix();
-
+    initLego();
+    mini_lego_sides();
+    mini_lego_base();
+    mini_lego_inner_faces();
+    mini_lego_top();
+    mini_lego_top_inner();
+    peg();
 }
-
-void legotess(int x, int y, const GLfloat *colors[4])
-{
-    int i, j;
-    glPushMatrix();
-        glTranslatef(-(LEGO_LENGTH + LEGO_WIDTH) * x / 2, -(LEGO_LENGTH + LEGO_WIDTH) * y / 2, 0);
-        for (i = 0; i < x; i++) {
-                glPushMatrix();
-            for (j = 0; j < y; j++) {
-                legofan(colors);
-                glTranslatef(0, LEGO_LENGTH + LEGO_WIDTH, 0);
-            }
-                glPopMatrix();
-                glTranslatef(LEGO_LENGTH + LEGO_WIDTH, 0, 0);
-        }
-    glPopMatrix();
-}
-void multilego(int max)
-{
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
-    
-    if (max < 1) return;
-
-    lego();
-    if (max == 1) return;
-    glPushMatrix();
-        glRotatef(90., 0, 0, 1);
-        glTranslatef(LEGO_WIDTH / 4, LEGO_WIDTH / 4, LEGO_HEIGHT);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
-        lego();
-        if (max == 2) { glPopMatrix(); return; }
-        glTranslatef(0, -LEGO_WIDTH, 0);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
-        lego();
-        if (max == 3) { glPopMatrix(); return; }
-        glTranslatef(0, 0, -2 *LEGO_HEIGHT);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, yellow);
-        lego();
-        if (max == 4) { glPopMatrix(); return; }
-        glTranslatef(- 2. / 3. * LEGO_LENGTH, - LEGO_WIDTH / 2, LEGO_HEIGHT);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, white);
-        lego();
-        if (max == 5) { glPopMatrix(); return; }
-        glRotatef(90., 0, 0, 1);
-        glTranslatef(LEGO_WIDTH / 4, LEGO_WIDTH / 4, 0);
-        glTranslatef(-LEGO_LENGTH / 3, -LEGO_WIDTH * 1.5, 0);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-        lego();
-        glPushMatrix();
-            glTranslatef(0, -LEGO_WIDTH, 0);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
-            lego();
-            glTranslatef(LEGO_LENGTH * 4./3, LEGO_WIDTH, 2 * LEGO_HEIGHT);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
-            lego();
-        glPopMatrix();
-        if (max == 6) { glPopMatrix(); return; }
-        glTranslatef(-LEGO_WIDTH / 2, -LEGO_WIDTH / 2, -LEGO_HEIGHT);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
-        lego();
-        if (max == 7) { glPopMatrix(); return; }
-        glTranslatef(LEGO_LENGTH, -LEGO_WIDTH/2, 0);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
-        lego();
-        if (max == 8) { glPopMatrix(); return; }
-    glPopMatrix();
-    glPushMatrix();
-        glTranslatef(0,LEGO_LENGTH,LEGO_HEIGHT);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, yellow);
-        lego();
-        if (max == 9) { glPopMatrix(); return; }
-        glPushMatrix();
-            glRotatef(90., 0, 0, 1);
-            glTranslatef(LEGO_WIDTH / 4, LEGO_WIDTH / 4, LEGO_HEIGHT);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, white);
-            lego();
-            if (max == 10) { glPopMatrix(); glPopMatrix(); return; }
-        glPopMatrix();
-        glPushMatrix();
-            glTranslatef(0, LEGO_LENGTH, LEGO_HEIGHT);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, green);
-            lego();
-            glTranslatef(0, 0, LEGO_HEIGHT);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
-            lego();
-            if (max == 11) { glPopMatrix(); glPopMatrix(); return; }
-        glPopMatrix();
-    glPopMatrix();
-    glPushMatrix();
-        glTranslatef(0,LEGO_WIDTH,0);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
-        lego();
-        if (max == 12) { glPopMatrix(); return; }
-        glPushMatrix();
-            glRotatef(90., 0, 0, 1);
-            glTranslatef(LEGO_WIDTH / 4, LEGO_WIDTH / 4, 0);
-            glTranslatef(LEGO_WIDTH * 2, 0, 0);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, white);
-            lego();
-            if (max == 13) { glPopMatrix(); glPopMatrix(); return; }
-        glPopMatrix();
-        glPushMatrix();
-            glTranslatef(0, LEGO_LENGTH, LEGO_HEIGHT);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-            lego();
-            if (max == 14) { glPopMatrix(); glPopMatrix(); return; }
-        glPopMatrix();
-        glPushMatrix();
-            glTranslatef(0,LEGO_WIDTH,0);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, yellow);
-            lego();
-            if (max == 15) { glPopMatrix(); glPopMatrix(); return; }
-        glPopMatrix();
-    glPopMatrix();
-}
-
